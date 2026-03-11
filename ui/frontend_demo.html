@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Flint UI Demo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Noto+Sans+SC:wght@400;500;700&family=Material+Symbols+Outlined:wght@300" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f6f7f3;
+      --ink: #0f1720;
+      --muted: #5c6670;
+      --card: #ffffff;
+      --line: #d9e0d8;
+      --brand: #0c8f78;
+      --ok: #1d8f52;
+      --warn: #c36a0e;
+      --bad: #bf3b3b;
+      --start: #b9dcff;
+      --glow: radial-gradient(circle at 10% 0%, rgba(12, 143, 120, 0.15), transparent 45%), radial-gradient(circle at 90% 30%, rgba(46, 126, 235, 0.16), transparent 35%);
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Noto Sans SC", sans-serif;
+      color: var(--ink);
+      background: var(--bg);
+      background-image: var(--glow);
+      min-height: 100vh;
+    }
+
+    .shell { display: grid; grid-template-columns: 260px 1fr; min-height: 100vh; }
+    .nav {
+      border-right: 1px solid var(--line);
+      background: linear-gradient(180deg, #ffffff 0%, #f2f8f6 100%);
+      padding: 22px 16px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 6px;
+      font-family: "Space Grotesk", sans-serif;
+      font-size: 30px;
+      font-weight: 700;
+    }
+
+    .brand img {
+      width: 30px;
+      height: 30px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: #fff;
+      object-fit: contain;
+    }
+
+    .sub { color: var(--muted); font-size: 13px; margin-bottom: 24px; }
+
+    .menu { display: flex; flex-direction: column; gap: 10px; }
+    .menu button {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #fff;
+      color: var(--ink);
+      text-align: left;
+      padding: 12px 14px;
+      font-size: 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: 0.2s ease;
+    }
+
+    .menu button .material-symbols-outlined {
+      font-size: 18px;
+      font-variation-settings: "FILL" 0, "wght" 300, "GRAD" 0, "opsz" 24;
+    }
+
+    .menu button.active {
+      background: linear-gradient(135deg, #0c8f78, #0da387);
+      color: #fff;
+      border-color: transparent;
+      transform: translateX(4px);
+      box-shadow: 0 8px 24px rgba(12, 143, 120, 0.25);
+    }
+
+    .main { padding: 20px; animation: reveal 0.3s ease; }
+
+    .panel {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.04);
+    }
+
+    .toolbar {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+    }
+
+    .left-actions, .right-actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+
+    .btn {
+      width: 132px;
+      border: none;
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: 13px;
+      cursor: pointer;
+      background: var(--ink);
+      color: #fff;
+      white-space: nowrap;
+    }
+
+    .btn.start { background: var(--start); color: #12315f; font-weight: 600; }
+    .btn.secondary { background: #e7ece8; color: #16212b; border: 1px solid var(--line); }
+
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { text-align: left; padding: 10px; border-bottom: 1px solid #edf1ed; }
+
+    .tag { border-radius: 999px; padding: 3px 10px; font-size: 12px; display: inline-block; }
+    .ok { background: rgba(29, 143, 82, 0.13); color: var(--ok); }
+    .bad { background: rgba(191, 59, 59, 0.14); color: var(--bad); }
+    .hidden { display: none; }
+
+    @keyframes reveal {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 900px) {
+      .shell { grid-template-columns: 1fr; }
+      .nav { border-right: none; border-bottom: 1px solid var(--line); }
+      .menu { flex-direction: row; overflow-x: auto; }
+      .menu button { white-space: nowrap; }
+      .toolbar { flex-direction: column; }
+      .right-actions { justify-content: flex-end; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <aside class="nav">
+      <div class="brand">
+        <img src="../assets/Flint_Icon.png" alt="Flint Icon">
+        <span>Flint</span>
+      </div>
+      <div class="sub">四页面MVP界面 Demo</div>
+      <div class="menu">
+        <button class="active" data-target="mail"><span class="material-symbols-outlined">local_shipping</span>运输协议外发</button>
+        <button data-target="inbound"><span class="material-symbols-outlined">fact_check</span>Inbound规划审查</button>
+        <button data-target="supplier"><span class="material-symbols-outlined">badge</span>供应商管理</button>
+        <button data-target="settings"><span class="material-symbols-outlined">settings</span>系统设置</button>
+      </div>
+    </aside>
+
+    <main class="main">
+      <section id="mail" class="view">
+        <div class="panel">
+          <div class="toolbar">
+            <div class="left-actions">
+              <button class="btn">扫描工作区</button>
+              <button class="btn start">开始发送</button>
+            </div>
+            <div class="right-actions">
+              <button class="btn secondary">重试失败</button>
+            </div>
+          </div>
+          <table>
+            <thead><tr><th>状态</th><th>项目</th><th>供应商</th><th>附件数</th><th>失败原因</th></tr></thead>
+            <tbody>
+              <tr><td><span class="tag ok">SUCCESS</span></td><td>Q2_AP_Review</td><td>10243</td><td>2</td><td>-</td></tr>
+              <tr><td><span class="tag bad">FAILED</span></td><td>Q2_AP_Review</td><td>10876</td><td>3</td><td>SMTP 421 限流</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="inbound" class="view hidden">
+        <div class="panel">
+          <div class="toolbar">
+            <div class="left-actions">
+              <button class="btn">选择文件</button>
+              <button class="btn start">开始审查</button>
+              <button class="btn">刷新日志</button>
+            </div>
+            <div class="right-actions">
+              <button class="btn secondary">导出日志</button>
+              <button class="btn secondary">重置状态</button>
+            </div>
+          </div>
+          <table>
+            <thead><tr><th>文件</th><th>行号</th><th>问题</th><th>级别</th></tr></thead>
+            <tbody>
+              <tr><td>Inbound_W12.xlsx</td><td>54</td><td>1.发货地编码与供应商号不一致 | 2.Inbound方式填写错误</td><td><span class="tag bad">异常</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="supplier" class="view hidden">
+        <div class="panel">
+          <div class="toolbar">
+            <div class="left-actions">
+              <button class="btn">新增供应商</button>
+              <button class="btn">编辑供应商</button>
+              <button class="btn">刷新列表</button>
+            </div>
+            <div class="right-actions"><button class="btn secondary">切换启用</button></div>
+          </div>
+          <table>
+            <thead><tr><th>供应商编码</th><th>供应商名称</th><th>邮箱</th><th>状态</th></tr></thead>
+            <tbody>
+              <tr><td>10243</td><td>ACME</td><td>a@example.com</td><td><span class="tag ok">启用</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="settings" class="view hidden">
+        <div class="panel">
+          <h3 style="margin-top:0;font-family:'Space Grotesk',sans-serif;">系统设置预览</h3>
+          <table>
+            <tbody>
+              <tr><th>SMTP Host</th><td>smtp.example.com</td></tr>
+              <tr><th>SMTP Port</th><td>587</td></tr>
+              <tr><th>TLS</th><td>启用</td></tr>
+              <tr><th>供应商匹配正则</th><td>_(\d{5})_[^/]+$</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const tabs = document.querySelectorAll('.menu button');
+    const views = document.querySelectorAll('.view');
+    tabs.forEach((tab) => {
+      tab.addEventListener('click', () => {
+        tabs.forEach((x) => x.classList.remove('active'));
+        tab.classList.add('active');
+        views.forEach((view) => view.classList.add('hidden'));
+        document.getElementById(tab.dataset.target).classList.remove('hidden');
+      });
+    });
+  </script>
+</body>
+</html>
