@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-theme="light">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -8,63 +8,131 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Noto+Sans+SC:wght@400;500;700&family=Material+Symbols+Outlined:wght@300" rel="stylesheet">
   <style>
-    :root {
+    /* ========== THEME: LIGHT ========== */
+    :root, [data-theme="light"] {
       --bg: #f6f7f3;
       --ink: #0f1720;
       --muted: #5c6670;
       --card: #ffffff;
+      --card-hover: #fafbf9;
       --line: #d9e0d8;
       --brand: #0c8f78;
+      --brand-soft: #e8f5f1;
+      --brand-hover: #0a7d69;
       --ok: #1d8f52;
       --warn: #c36a0e;
       --bad: #bf3b3b;
-      --start: #b9dcff;
-      --glow: radial-gradient(circle at 10% 0%, rgba(12, 143, 120, 0.15), transparent 45%), radial-gradient(circle at 90% 30%, rgba(46, 126, 235, 0.16), transparent 35%);
+      --accent: #3b82c4;
+      --accent-bg: #ddeaf8;
+      --accent-text: #1a3e66;
+      --ghost-bg: #eef2ee;
+      --ghost-hover: #dfe5df;
+      --ghost-text: #2c3e36;
+      --glow: radial-gradient(circle at 10% 0%, rgba(12, 143, 120, 0.15), transparent 45%),
+              radial-gradient(circle at 90% 30%, rgba(46, 126, 235, 0.16), transparent 35%);
+      --input-bg: #fff;
+      --nav-bg: linear-gradient(180deg, #ffffff 0%, #f2f8f6 100%);
+      --overlay: rgba(0, 0, 0, 0.4);
+      --toast-bg: #1a2332;
+      --toast-text: #e8ece9;
     }
 
-    * { box-sizing: border-box; }
+    /* ========== THEME: DARK ========== */
+    [data-theme="dark"] {
+      --bg: #0f1720;
+      --ink: #e0e4e1;
+      --muted: #8a9299;
+      --card: #1a2332;
+      --card-hover: #1f2b3c;
+      --line: #2a3644;
+      --brand: #1aaf94;
+      --brand-soft: #0f2e28;
+      --brand-hover: #15c4a5;
+      --ok: #34c471;
+      --warn: #e88d33;
+      --bad: #e05555;
+      --accent: #5da3e0;
+      --accent-bg: #1a2e44;
+      --accent-text: #a8d0f5;
+      --ghost-bg: #1f2b3c;
+      --ghost-hover: #273747;
+      --ghost-text: #b0bec5;
+      --glow: radial-gradient(circle at 10% 0%, rgba(26, 175, 148, 0.12), transparent 45%),
+              radial-gradient(circle at 90% 30%, rgba(93, 163, 224, 0.10), transparent 35%);
+      --input-bg: #152030;
+      --nav-bg: linear-gradient(180deg, #141e2c 0%, #111a26 100%);
+      --overlay: rgba(0, 0, 0, 0.65);
+      --toast-bg: #e8ece9;
+      --toast-text: #0f1720;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
     body {
-      margin: 0;
       font-family: "Noto Sans SC", sans-serif;
       color: var(--ink);
       background: var(--bg);
       background-image: var(--glow);
       min-height: 100vh;
+      transition: background 0.3s ease, color 0.3s ease;
     }
 
+    /* ========== LAYOUT ========== */
     .shell { display: grid; grid-template-columns: 260px 1fr; min-height: 100vh; }
+
+    /* ========== SIDEBAR ========== */
     .nav {
       border-right: 1px solid var(--line);
-      background: linear-gradient(180deg, #ffffff 0%, #f2f8f6 100%);
+      background: var(--nav-bg);
       padding: 22px 16px;
+      display: flex;
+      flex-direction: column;
+      transition: background 0.3s ease, border-color 0.3s ease;
     }
+
+    .brand-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
 
     .brand {
       display: flex;
       align-items: center;
       gap: 10px;
-      margin-bottom: 6px;
       font-family: "Space Grotesk", sans-serif;
       font-size: 30px;
       font-weight: 700;
     }
 
     .brand img {
-      width: 30px;
-      height: 30px;
+      width: 30px; height: 30px;
       border-radius: 8px;
       border: 1px solid var(--line);
-      background: #fff;
+      background: var(--card);
       object-fit: contain;
     }
 
+    /* ========== THEME TOGGLE ========== */
+    .theme-toggle {
+      background: var(--ghost-bg);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      cursor: pointer;
+      padding: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--muted);
+      transition: all 0.2s ease;
+    }
+    .theme-toggle:hover { background: var(--ghost-hover); color: var(--ink); }
+    .theme-toggle .material-symbols-outlined { font-size: 18px; }
+
     .sub { color: var(--muted); font-size: 13px; margin-bottom: 24px; }
 
-    .menu { display: flex; flex-direction: column; gap: 10px; }
+    .menu { display: flex; flex-direction: column; gap: 10px; flex: 1; }
+
     .menu button {
       border: 1px solid var(--line);
       border-radius: 14px;
-      background: #fff;
+      background: var(--card);
       color: var(--ink);
       text-align: left;
       padding: 12px 14px;
@@ -73,12 +141,19 @@
       display: flex;
       align-items: center;
       gap: 8px;
-      transition: 0.2s ease;
+      transition: all 0.2s ease;
     }
 
     .menu button .material-symbols-outlined {
       font-size: 18px;
       font-variation-settings: "FILL" 0, "wght" 300, "GRAD" 0, "opsz" 24;
+    }
+
+    .menu button:not(.active):hover {
+      background: var(--brand-soft);
+      border-color: var(--brand);
+      transform: translateX(2px);
+      box-shadow: 0 2px 8px rgba(12, 143, 120, 0.08);
     }
 
     .menu button.active {
@@ -89,26 +164,73 @@
       box-shadow: 0 8px 24px rgba(12, 143, 120, 0.25);
     }
 
-    .main { padding: 20px; animation: reveal 0.3s ease; }
+    .menu button:focus-visible {
+      outline: 2px solid var(--brand);
+      outline-offset: 2px;
+    }
 
+    .nav-footer {
+      margin-top: auto;
+      padding-top: 16px;
+      border-top: 1px solid var(--line);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    /* ========== MAIN ========== */
+    .main { padding: 20px; display: flex; flex-direction: column; min-height: 0; }
+
+    /* ========== PANEL ========== */
     .panel {
       background: var(--card);
       border: 1px solid var(--line);
       border-radius: 16px;
-      padding: 16px;
+      padding: 20px;
       box-shadow: 0 8px 20px rgba(0, 0, 0, 0.04);
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      animation: reveal 0.3s ease;
+      transition: background 0.3s ease, border-color 0.3s ease;
     }
 
+    .page-title {
+      font-family: "Space Grotesk", "Noto Sans SC", sans-serif;
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--ink);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .page-title .material-symbols-outlined {
+      font-size: 20px;
+      color: var(--brand);
+      font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24;
+    }
+
+    /* ========== TOOLBAR ========== */
     .toolbar {
       display: flex;
       justify-content: space-between;
       gap: 10px;
       flex-wrap: wrap;
-      margin-bottom: 14px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid var(--line);
     }
 
-    .left-actions, .right-actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+    .left-actions, .right-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
 
+    /* ========== BUTTONS ========== */
     .btn {
       width: 132px;
       border: none;
@@ -116,143 +238,665 @@
       padding: 10px 14px;
       font-size: 13px;
       cursor: pointer;
-      background: var(--ink);
-      color: #fff;
       white-space: nowrap;
+      transition: all 0.15s ease;
+      text-align: center;
+      font-family: inherit;
     }
 
-    .btn.start { background: var(--start); color: #12315f; font-weight: 600; }
-    .btn.secondary { background: #e7ece8; color: #16212b; border: 1px solid var(--line); }
+    /* Primary: brand green */
+    .btn.primary {
+      background: var(--brand);
+      color: #fff;
+    }
+    .btn.primary:hover {
+      background: var(--brand-hover);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 14px rgba(12, 143, 120, 0.3);
+    }
+    .btn.primary:active {
+      transform: translateY(0);
+      box-shadow: none;
+    }
+
+    /* Accent: blue start buttons */
+    .btn.accent {
+      background: var(--accent-bg);
+      color: var(--accent-text);
+      font-weight: 600;
+    }
+    .btn.accent:hover {
+      background: var(--accent);
+      color: #fff;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 14px rgba(59, 130, 196, 0.25);
+    }
+    .btn.accent:active {
+      transform: translateY(0);
+      box-shadow: none;
+    }
+
+    /* Ghost: outline/subtle */
+    .btn.ghost {
+      background: var(--ghost-bg);
+      color: var(--ghost-text);
+      border: 1px solid var(--line);
+    }
+    .btn.ghost:hover {
+      background: var(--ghost-hover);
+      border-color: var(--brand);
+      color: var(--brand);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06);
+    }
+    .btn.ghost:active {
+      transform: translateY(0);
+      box-shadow: none;
+    }
+
+    .btn:focus-visible {
+      outline: 2px solid var(--brand);
+      outline-offset: 2px;
+    }
+
+    /* ========== TABLE ========== */
+    .table-wrap { flex: 1; overflow-y: auto; margin-top: 14px; }
 
     table { width: 100%; border-collapse: collapse; font-size: 13px; }
-    th, td { text-align: left; padding: 10px; border-bottom: 1px solid #edf1ed; }
+    th { text-align: left; padding: 10px; border-bottom: 2px solid var(--line); font-weight: 600; color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+    td { text-align: left; padding: 10px; border-bottom: 1px solid var(--line); }
 
-    .tag { border-radius: 999px; padding: 3px 10px; font-size: 12px; display: inline-block; }
-    .ok { background: rgba(29, 143, 82, 0.13); color: var(--ok); }
-    .bad { background: rgba(191, 59, 59, 0.14); color: var(--bad); }
-    .hidden { display: none; }
+    tbody tr { transition: background 0.15s ease; cursor: default; }
+    tbody tr:hover { background: var(--brand-soft); }
+
+    /* ========== STATUS TAGS ========== */
+    .tag { border-radius: 999px; padding: 3px 10px; font-size: 12px; font-weight: 600; display: inline-block; }
+    .ok  { background: rgba(29, 143, 82, 0.18); color: var(--ok); }
+    .bad { background: rgba(191, 59, 59, 0.18); color: var(--bad); }
+    .warn { background: rgba(195, 106, 14, 0.15); color: var(--warn); }
+    .tag.disabled { background: var(--ghost-bg); color: var(--muted); }
+
+    /* ========== SUMMARY BAR ========== */
+    .summary-bar {
+      margin-top: auto;
+      padding-top: 12px;
+      border-top: 1px solid var(--line);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .summary-bar .stat { display: flex; gap: 16px; }
+    .summary-bar .stat span { display: flex; align-items: center; gap: 4px; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+    .dot.green { background: var(--ok); }
+    .dot.red { background: var(--bad); }
+    .dot.orange { background: var(--warn); }
+    .dot.gray { background: var(--muted); }
+
+    /* ========== PROGRESS INDICATOR ========== */
+    .progress-pill {
+      font-size: 12px;
+      color: var(--muted);
+      background: var(--ghost-bg);
+      padding: 6px 12px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .progress-pill .material-symbols-outlined { font-size: 14px; color: var(--brand); }
+
+    /* ========== FORM CONTROLS ========== */
+    .form-group { margin-bottom: 16px; }
+    .form-group label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--muted);
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+    .form-input {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      font-size: 14px;
+      font-family: inherit;
+      color: var(--ink);
+      background: var(--input-bg);
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+    .form-input:focus {
+      outline: none;
+      border-color: var(--brand);
+      box-shadow: 0 0 0 3px rgba(12, 143, 120, 0.12);
+    }
+    .form-input::placeholder { color: var(--muted); opacity: 0.6; }
+    textarea.form-input { resize: vertical; min-height: 80px; }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 16px;
+    }
+
+    .form-section-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--ink);
+      margin: 20px 0 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .form-section-title:first-of-type { margin-top: 8px; }
+    .form-section-title .material-symbols-outlined { font-size: 16px; color: var(--brand); }
+
+    .password-wrap { position: relative; }
+    .password-wrap .form-input { padding-right: 42px; }
+    .password-toggle {
+      position: absolute;
+      right: 10px; top: 50%; transform: translateY(-50%);
+      background: none; border: none; cursor: pointer;
+      color: var(--muted);
+      display: flex; align-items: center;
+    }
+    .password-toggle .material-symbols-outlined { font-size: 18px; }
+
+    /* ========== MODAL ========== */
+    .modal-overlay {
+      position: fixed; inset: 0;
+      background: var(--overlay);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 100;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+    }
+    .modal-overlay.show {
+      opacity: 1;
+      pointer-events: all;
+    }
+    .modal {
+      background: var(--card);
+      border-radius: 16px;
+      padding: 24px;
+      width: 400px;
+      max-width: 90vw;
+      box-shadow: 0 24px 48px rgba(0, 0, 0, 0.15);
+      transform: scale(0.95) translateY(8px);
+      transition: transform 0.2s ease;
+    }
+    .modal-overlay.show .modal {
+      transform: scale(1) translateY(0);
+    }
+    .modal h3 { font-size: 16px; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+    .modal h3 .material-symbols-outlined { color: var(--brand); font-size: 20px; }
+    .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+    .modal-actions .btn { width: auto; padding: 10px 20px; }
+
+    /* ========== TOAST ========== */
+    .toast-container {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      z-index: 200;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .toast {
+      background: var(--toast-bg);
+      color: var(--toast-text);
+      padding: 12px 20px;
+      border-radius: 10px;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+      transform: translateX(120%);
+      transition: transform 0.3s ease;
+    }
+    .toast.show { transform: translateX(0); }
+    .toast .material-symbols-outlined { font-size: 18px; }
+    .toast.success .material-symbols-outlined { color: var(--ok); }
+    .toast.error .material-symbols-outlined { color: var(--bad); }
+    .toast.info .material-symbols-outlined { color: var(--accent); }
+
+    /* ========== SKELETON LOADING ========== */
+    .skeleton-row td { position: relative; }
+    .skeleton {
+      height: 14px;
+      border-radius: 6px;
+      background: linear-gradient(90deg, var(--ghost-bg) 25%, var(--ghost-hover) 50%, var(--ghost-bg) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+    }
+    @keyframes shimmer {
+      0% { background-position: -200% 0; }
+      100% { background-position: 200% 0; }
+    }
+
+    /* ========== EMPTY STATE ========== */
+    .empty-state {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      color: var(--muted);
+      padding: 40px 20px;
+    }
+    .empty-state .material-symbols-outlined {
+      font-size: 48px;
+      color: var(--line);
+      font-variation-settings: "FILL" 0, "wght" 200, "GRAD" 0, "opsz" 48;
+    }
+    .empty-state p { font-size: 14px; text-align: center; }
+    .empty-state .hint { font-size: 12px; opacity: 0.7; }
+
+    /* ========== ANIMATION ========== */
+    .hidden { display: none !important; }
 
     @keyframes reveal {
       from { opacity: 0; transform: translateY(10px); }
       to { opacity: 1; transform: translateY(0); }
     }
 
+    /* ========== RESPONSIVE ========== */
     @media (max-width: 900px) {
       .shell { grid-template-columns: 1fr; }
-      .nav { border-right: none; border-bottom: 1px solid var(--line); }
-      .menu { flex-direction: row; overflow-x: auto; }
+      .nav { border-right: none; border-bottom: 1px solid var(--line); flex-direction: row; padding: 12px 16px; align-items: center; }
+      .menu { flex-direction: row; overflow-x: auto; gap: 8px; }
       .menu button { white-space: nowrap; }
       .toolbar { flex-direction: column; }
       .right-actions { justify-content: flex-end; }
+      .brand { margin-bottom: 0; font-size: 22px; }
+      .sub, .nav-footer { display: none; }
     }
   </style>
 </head>
 <body>
   <div class="shell">
     <aside class="nav">
-      <div class="brand">
-        <img src="../assets/Flint_Icon.png" alt="Flint Icon">
-        <span>Flint</span>
+      <div class="brand-row">
+        <div class="brand">
+          <img src="../assets/Flint_Icon.png" alt="Flint Icon">
+          <span>Flint</span>
+        </div>
+        <button class="theme-toggle" id="themeToggle" title="切换主题">
+          <span class="material-symbols-outlined" id="themeIcon">dark_mode</span>
+        </button>
       </div>
-      <div class="sub">四页面MVP界面 Demo</div>
+      <div class="sub">物流运营工具平台</div>
       <div class="menu">
-        <button class="active" data-target="mail"><span class="material-symbols-outlined">local_shipping</span>运输协议外发</button>
-        <button data-target="inbound"><span class="material-symbols-outlined">fact_check</span>Inbound规划审查</button>
+        <button class="active" data-target="inbound"><span class="material-symbols-outlined">fact_check</span>Inbound规划审查</button>
+        <button data-target="mail"><span class="material-symbols-outlined">local_shipping</span>运输协议外发</button>
         <button data-target="supplier"><span class="material-symbols-outlined">badge</span>供应商管理</button>
         <button data-target="settings"><span class="material-symbols-outlined">settings</span>系统设置</button>
+      </div>
+      <div class="nav-footer">
+        <span>V1.0 · Gu Sisong</span>
+        <span>关于 Flint</span>
       </div>
     </aside>
 
     <main class="main">
-      <section id="mail" class="view">
+      <!-- ==================== PAGE 1: Inbound 规划审查 ==================== -->
+      <section id="inbound" class="view">
         <div class="panel">
+          <div class="page-title">
+            <span class="material-symbols-outlined">fact_check</span>
+            Inbound 规划审查
+          </div>
           <div class="toolbar">
             <div class="left-actions">
-              <button class="btn">扫描工作区</button>
-              <button class="btn start">开始发送</button>
+              <button class="btn primary" onclick="simulateFileSelect()">选择文件</button>
+              <button class="btn accent" onclick="simulateReview()">开始审查</button>
+              <button class="btn primary" onclick="showToast('日志已刷新', 'info')">刷新日志</button>
             </div>
             <div class="right-actions">
-              <button class="btn secondary">重试失败</button>
+              <button class="btn ghost" onclick="showToast('日志已导出到 data/logs/', 'success')">导出日志</button>
+              <button class="btn ghost" onclick="resetInbound()">重置状态</button>
             </div>
           </div>
-          <table>
-            <thead><tr><th>状态</th><th>项目</th><th>供应商</th><th>附件数</th><th>失败原因</th></tr></thead>
-            <tbody>
-              <tr><td><span class="tag ok">SUCCESS</span></td><td>Q2_AP_Review</td><td>10243</td><td>2</td><td>-</td></tr>
-              <tr><td><span class="tag bad">FAILED</span></td><td>Q2_AP_Review</td><td>10876</td><td>3</td><td>SMTP 421 限流</td></tr>
-            </tbody>
-          </table>
+          <div class="table-wrap" id="inboundTable">
+            <table>
+              <thead><tr><th>文件</th><th>行号</th><th>问题</th><th>级别</th></tr></thead>
+              <tbody id="inboundBody">
+                <tr><td>Inbound_W12.xlsx</td><td>54</td><td>1.发货地编码与供应商号不一致 | 2.Inbound方式填写错误</td><td><span class="tag bad">异常</span></td></tr>
+                <tr><td>Inbound_W12.xlsx</td><td>78</td><td>1.运输距离大于300公里，未规划带VMI</td><td><span class="tag warn">警告</span></td></tr>
+                <tr><td>Inbound_W13.xlsx</td><td>12</td><td>1.缺少必填值</td><td><span class="tag bad">异常</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="summary-bar" id="inboundSummary">
+            <div class="stat">
+              <span><span class="dot red"></span> 异常 2</span>
+              <span><span class="dot orange"></span> 警告 1</span>
+            </div>
+            <span>共 3 条异常 · 2 个文件</span>
+          </div>
         </div>
       </section>
 
-      <section id="inbound" class="view hidden">
+      <!-- ==================== PAGE 2: 运输协议外发 ==================== -->
+      <section id="mail" class="view hidden">
         <div class="panel">
+          <div class="page-title">
+            <span class="material-symbols-outlined">local_shipping</span>
+            运输协议外发
+          </div>
           <div class="toolbar">
             <div class="left-actions">
-              <button class="btn">选择文件</button>
-              <button class="btn start">开始审查</button>
-              <button class="btn">刷新日志</button>
+              <button class="btn primary" onclick="simulateScan()">扫描工作区</button>
+              <button class="btn accent" onclick="simulateSend()">开始发送</button>
             </div>
             <div class="right-actions">
-              <button class="btn secondary">导出日志</button>
-              <button class="btn secondary">重置状态</button>
+              <div class="progress-pill" id="mailProgress">
+                <span class="material-symbols-outlined">schedule</span>
+                <span id="mailProgressText">已发送 1 / 2</span>
+              </div>
+              <button class="btn ghost" onclick="showToast('正在重试失败任务...', 'info')">重试失败</button>
             </div>
           </div>
-          <table>
-            <thead><tr><th>文件</th><th>行号</th><th>问题</th><th>级别</th></tr></thead>
-            <tbody>
-              <tr><td>Inbound_W12.xlsx</td><td>54</td><td>1.发货地编码与供应商号不一致 | 2.Inbound方式填写错误</td><td><span class="tag bad">异常</span></td></tr>
-            </tbody>
-          </table>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>状态</th><th>项目</th><th>供应商</th><th>附件数</th><th>失败原因</th></tr></thead>
+              <tbody id="mailBody">
+                <tr><td><span class="tag ok">SUCCESS</span></td><td>Q2_AP_Review</td><td>10243</td><td>2</td><td>-</td></tr>
+                <tr><td><span class="tag bad">FAILED</span></td><td>Q2_AP_Review</td><td>10876</td><td>3</td><td>SMTP 421 限流</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="summary-bar">
+            <div class="stat">
+              <span><span class="dot green"></span> 成功 1</span>
+              <span><span class="dot red"></span> 失败 1</span>
+              <span><span class="dot gray"></span> 待发 0</span>
+            </div>
+            <span>共 2 条记录</span>
+          </div>
         </div>
       </section>
 
+      <!-- ==================== PAGE 3: 供应商管理 ==================== -->
       <section id="supplier" class="view hidden">
         <div class="panel">
+          <div class="page-title">
+            <span class="material-symbols-outlined">badge</span>
+            供应商管理
+          </div>
           <div class="toolbar">
             <div class="left-actions">
-              <button class="btn">新增供应商</button>
-              <button class="btn">编辑供应商</button>
-              <button class="btn">刷新列表</button>
+              <button class="btn primary" onclick="openModal('addSupplier')">新增供应商</button>
+              <button class="btn primary" onclick="showToast('请先选择一个供应商', 'info')">编辑供应商</button>
+              <button class="btn primary" onclick="showToast('列表已刷新', 'success')">刷新列表</button>
             </div>
-            <div class="right-actions"><button class="btn secondary">切换启用</button></div>
+            <div class="right-actions"><button class="btn ghost">切换启用</button></div>
           </div>
-          <table>
-            <thead><tr><th>供应商编码</th><th>供应商名称</th><th>邮箱</th><th>状态</th></tr></thead>
-            <tbody>
-              <tr><td>10243</td><td>ACME</td><td>a@example.com</td><td><span class="tag ok">启用</span></td></tr>
-            </tbody>
-          </table>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>供应商编码</th><th>供应商名称</th><th>邮箱</th><th>状态</th></tr></thead>
+              <tbody id="supplierBody">
+                <tr><td>10243</td><td>ACME Corp</td><td>logistics@acme.com</td><td><span class="tag ok">启用</span></td></tr>
+                <tr><td>10876</td><td>GlobalParts Ltd</td><td>info@globalparts.cn</td><td><span class="tag ok">启用</span></td></tr>
+                <tr><td>11502</td><td>东方精密</td><td>contact@dfprecision.cn</td><td><span class="tag disabled">停用</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="summary-bar">
+            <div class="stat">
+              <span><span class="dot green"></span> 启用 2</span>
+              <span><span class="dot gray"></span> 停用 1</span>
+            </div>
+            <span>共 3 个供应商</span>
+          </div>
         </div>
       </section>
 
+      <!-- ==================== PAGE 4: 系统设置 ==================== -->
       <section id="settings" class="view hidden">
         <div class="panel">
-          <h3 style="margin-top:0;font-family:'Space Grotesk',sans-serif;">系统设置预览</h3>
-          <table>
-            <tbody>
-              <tr><th>SMTP Host</th><td>smtp.example.com</td></tr>
-              <tr><th>SMTP Port</th><td>587</td></tr>
-              <tr><th>TLS</th><td>启用</td></tr>
-              <tr><th>供应商匹配正则</th><td>_(\d{5})_[^/]+$</td></tr>
-            </tbody>
-          </table>
+          <div class="page-title">
+            <span class="material-symbols-outlined">settings</span>
+            系统设置
+          </div>
+          <div class="toolbar">
+            <div class="left-actions">
+              <button class="btn primary" onclick="showToast('配置已读取', 'success')">读取配置</button>
+            </div>
+            <div class="right-actions">
+              <button class="btn accent" onclick="showToast('配置已保存', 'success')">保存配置</button>
+            </div>
+          </div>
+
+          <div style="flex:1;overflow-y:auto;margin-top:14px;">
+            <div class="form-section-title">
+              <span class="material-symbols-outlined">mail</span>
+              SMTP 设置
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>SMTP Host</label>
+                <input class="form-input" type="text" value="smtp.example.com">
+              </div>
+              <div class="form-group">
+                <label>SMTP Port</label>
+                <input class="form-input" type="text" value="587">
+              </div>
+              <div class="form-group">
+                <label>用户名</label>
+                <input class="form-input" type="text" value="sender@example.com">
+              </div>
+              <div class="form-group">
+                <label>密码</label>
+                <div class="password-wrap">
+                  <input class="form-input" type="password" value="encrypted">
+                  <button class="password-toggle" title="显示/隐藏密码">
+                    <span class="material-symbols-outlined">visibility_off</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-section-title">
+              <span class="material-symbols-outlined">rule</span>
+              规则与签名
+            </div>
+            <div class="form-group">
+              <label>供应商匹配正则</label>
+              <input class="form-input" type="text" value="_(\d{5})_[^/]+$">
+            </div>
+            <div class="form-group">
+              <label>签名文本</label>
+              <textarea class="form-input">Best Regards,
+Flint Transportation System
+物流运营部</textarea>
+            </div>
+          </div>
         </div>
       </section>
     </main>
   </div>
 
+  <!-- ========== MODAL: 新增供应商 ========== -->
+  <div class="modal-overlay" id="addSupplierModal">
+    <div class="modal">
+      <h3><span class="material-symbols-outlined">person_add</span>新增供应商</h3>
+      <div class="form-group">
+        <label>供应商编码</label>
+        <input class="form-input" type="text" id="newSupCode" placeholder="5位编码，如 12345">
+      </div>
+      <div class="form-group">
+        <label>供应商名称</label>
+        <input class="form-input" type="text" id="newSupName" placeholder="供应商全称">
+      </div>
+      <div class="form-group">
+        <label>邮箱</label>
+        <input class="form-input" type="email" id="newSupEmail" placeholder="example@company.com">
+      </div>
+      <div class="modal-actions">
+        <button class="btn ghost" style="width:auto;padding:10px 20px;" onclick="closeModal('addSupplierModal')">取消</button>
+        <button class="btn primary" style="width:auto;padding:10px 20px;" onclick="addSupplier()">添加</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== TOAST CONTAINER ========== -->
+  <div class="toast-container" id="toastContainer"></div>
+
   <script>
+    /* ========== NAV SWITCHING ========== */
     const tabs = document.querySelectorAll('.menu button');
     const views = document.querySelectorAll('.view');
     tabs.forEach((tab) => {
       tab.addEventListener('click', () => {
         tabs.forEach((x) => x.classList.remove('active'));
         tab.classList.add('active');
-        views.forEach((view) => view.classList.add('hidden'));
-        document.getElementById(tab.dataset.target).classList.remove('hidden');
+        views.forEach((v) => v.classList.add('hidden'));
+        document.getElementById(tab.dataset.target)?.classList.remove('hidden');
       });
     });
+
+    /* ========== THEME TOGGLE ========== */
+    const themeToggle = document.getElementById('themeToggle');
+    const themeIcon = document.getElementById('themeIcon');
+    themeToggle.addEventListener('click', () => {
+      const html = document.documentElement;
+      const isDark = html.getAttribute('data-theme') === 'dark';
+      html.setAttribute('data-theme', isDark ? 'light' : 'dark');
+      themeIcon.textContent = isDark ? 'dark_mode' : 'light_mode';
+    });
+
+    /* ========== PASSWORD TOGGLE ========== */
+    document.querySelectorAll('.password-toggle').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const input = btn.parentElement.querySelector('.form-input');
+        const icon = btn.querySelector('.material-symbols-outlined');
+        if (input.type === 'password') { input.type = 'text'; icon.textContent = 'visibility'; }
+        else { input.type = 'password'; icon.textContent = 'visibility_off'; }
+      });
+    });
+
+    /* ========== TOAST SYSTEM ========== */
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      toast.className = `toast ${type}`;
+      const icons = { success: 'check_circle', error: 'error', info: 'info' };
+      toast.innerHTML = `<span class="material-symbols-outlined">${icons[type] || 'info'}</span>${message}`;
+      container.appendChild(toast);
+      requestAnimationFrame(() => toast.classList.add('show'));
+      setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 300);
+      }, 2500);
+    }
+
+    /* ========== MODAL SYSTEM ========== */
+    function openModal(id) {
+      document.getElementById(id + 'Modal').classList.add('show');
+    }
+    function closeModal(id) {
+      document.getElementById(id).classList.remove('show');
+    }
+
+    /* ========== INTERACTIVE: ADD SUPPLIER ========== */
+    function addSupplier() {
+      const code = document.getElementById('newSupCode').value || '12345';
+      const name = document.getElementById('newSupName').value || '新供应商';
+      const email = document.getElementById('newSupEmail').value || 'new@example.com';
+      const tbody = document.getElementById('supplierBody');
+      const tr = document.createElement('tr');
+      tr.style.animation = 'reveal 0.3s ease';
+      tr.innerHTML = `<td>${code}</td><td>${name}</td><td>${email}</td><td><span class="tag ok">启用</span></td>`;
+      tbody.appendChild(tr);
+      closeModal('addSupplierModal');
+      showToast(`供应商 ${name} 已添加`, 'success');
+      document.getElementById('newSupCode').value = '';
+      document.getElementById('newSupName').value = '';
+      document.getElementById('newSupEmail').value = '';
+    }
+
+    /* ========== INTERACTIVE: SIMULATE FILE SELECT ========== */
+    function simulateFileSelect() {
+      showToast('已选择 3 个文件', 'info');
+    }
+
+    /* ========== INTERACTIVE: SIMULATE REVIEW ========== */
+    function simulateReview() {
+      const tbody = document.getElementById('inboundBody');
+      tbody.innerHTML = `
+        <tr class="skeleton-row"><td><div class="skeleton" style="width:120px"></div></td><td><div class="skeleton" style="width:30px"></div></td><td><div class="skeleton" style="width:280px"></div></td><td><div class="skeleton" style="width:40px"></div></td></tr>
+        <tr class="skeleton-row"><td><div class="skeleton" style="width:100px"></div></td><td><div class="skeleton" style="width:30px"></div></td><td><div class="skeleton" style="width:200px"></div></td><td><div class="skeleton" style="width:40px"></div></td></tr>
+        <tr class="skeleton-row"><td><div class="skeleton" style="width:130px"></div></td><td><div class="skeleton" style="width:30px"></div></td><td><div class="skeleton" style="width:250px"></div></td><td><div class="skeleton" style="width:40px"></div></td></tr>
+      `;
+      document.getElementById('inboundSummary').innerHTML = '<span style="color:var(--brand)">审查中...</span>';
+      setTimeout(() => {
+        tbody.innerHTML = `
+          <tr><td>Inbound_W12.xlsx</td><td>54</td><td>1.发货地编码与供应商号不一致 | 2.Inbound方式填写错误</td><td><span class="tag bad">异常</span></td></tr>
+          <tr><td>Inbound_W12.xlsx</td><td>78</td><td>1.运输距离大于300公里，未规划带VMI</td><td><span class="tag warn">警告</span></td></tr>
+          <tr><td>Inbound_W13.xlsx</td><td>12</td><td>1.缺少必填值</td><td><span class="tag bad">异常</span></td></tr>
+          <tr><td>Inbound_W14.xlsx</td><td>33</td><td>1.JIS零件供货距离大于20公里</td><td><span class="tag bad">异常</span></td></tr>
+        `;
+        document.getElementById('inboundSummary').innerHTML = `
+          <div class="stat"><span><span class="dot red"></span> 异常 3</span><span><span class="dot orange"></span> 警告 1</span></div>
+          <span>共 4 条异常 · 3 个文件</span>
+        `;
+        showToast('审查完成：发现 4 条异常', 'success');
+      }, 1800);
+    }
+
+    /* ========== INTERACTIVE: RESET INBOUND ========== */
+    function resetInbound() {
+      document.getElementById('inboundBody').innerHTML = '';
+      document.getElementById('inboundSummary').innerHTML = `
+        <div class="stat"><span><span class="dot gray"></span> 无数据</span></div>
+        <span>共 0 条记录</span>
+      `;
+      showToast('状态已重置', 'info');
+    }
+
+    /* ========== INTERACTIVE: SIMULATE SCAN ========== */
+    function simulateScan() {
+      const tbody = document.getElementById('mailBody');
+      tbody.innerHTML = `
+        <tr class="skeleton-row"><td><div class="skeleton" style="width:60px"></div></td><td><div class="skeleton" style="width:100px"></div></td><td><div class="skeleton" style="width:50px"></div></td><td><div class="skeleton" style="width:20px"></div></td><td><div class="skeleton" style="width:80px"></div></td></tr>
+      `;
+      setTimeout(() => {
+        tbody.innerHTML = `
+          <tr><td><span class="tag ok">SUCCESS</span></td><td>Q2_AP_Review</td><td>10243</td><td>2</td><td>-</td></tr>
+          <tr><td><span class="tag bad">FAILED</span></td><td>Q2_AP_Review</td><td>10876</td><td>3</td><td>SMTP 421 限流</td></tr>
+          <tr><td><span class="tag" style="background:var(--accent-bg);color:var(--accent-text)">PENDING</span></td><td>Q3_Transport</td><td>11502</td><td>1</td><td>-</td></tr>
+        `;
+        document.getElementById('mailProgressText').textContent = '已发送 1 / 3';
+        showToast('扫描完成：发现 3 个任务', 'success');
+      }, 1200);
+    }
+
+    /* ========== INTERACTIVE: SIMULATE SEND ========== */
+    function simulateSend() {
+      showToast('开始发送邮件...', 'info');
+      let sent = 1;
+      const total = 3;
+      const interval = setInterval(() => {
+        sent++;
+        document.getElementById('mailProgressText').textContent = `已发送 ${sent} / ${total}`;
+        if (sent >= total) {
+          clearInterval(interval);
+          showToast('发送完成', 'success');
+        }
+      }, 1000);
+    }
   </script>
 </body>
 </html>
