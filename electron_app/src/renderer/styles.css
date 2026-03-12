@@ -92,6 +92,7 @@
       grid-template-columns: 260px 1fr;
       min-height: 100%;
       height: 100%;
+      padding-top: 38px;
     }
 
     /* ========== SIDEBAR ========== */
@@ -714,22 +715,22 @@
 
     .window-controls {
       position: absolute;
-      top: 14px;
-      right: 20px;
+      top: 0;
+      right: 0;
       z-index: 40;
       display: flex;
       align-items: center;
-      border: 1px solid color-mix(in srgb, var(--line) 80%, transparent);
-      border-radius: 10px;
-      overflow: hidden;
-      background: color-mix(in srgb, var(--ghost-bg) 86%, transparent);
-      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+      border: none;
+      border-radius: 0;
+      overflow: visible;
+      background: transparent;
+      box-shadow: none;
       -webkit-app-region: no-drag;
     }
 
     .window-control-btn {
-      width: 34px;
-      height: 30px;
+      width: 46px;
+      height: 34px;
       border: none;
       background: transparent;
       color: var(--muted);
@@ -761,5 +762,6 @@
       .right-actions { justify-content: flex-end; }
       .brand { margin-bottom: 0; font-size: 22px; }
       .sub, .nav-footer { display: none; }
-      .window-controls { top: 10px; right: 12px; }
+      .shell-inner { padding-top: 34px; }
+      .window-controls { top: 0; right: 0; }
     }

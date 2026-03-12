@@ -1,5 +1,5 @@
 <template>
-  <div class="shell app-shell">
+  <div class="app-shell">
     <div class="window-controls">
       <button class="window-control-btn" type="button" aria-label="最小化" @click="minimizeWindow">
         <span class="material-symbols-outlined">remove</span>

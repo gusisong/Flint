@@ -258,6 +258,13 @@
 
 * UI Demo 采用分模块目录组织：`ui/demo_modular/index.html` + `pages/` + `styles/` + `scripts/`。
 * `scripts/` 按 shared 与业务模块拆分（inbound/mail/supplier/table），避免单文件脚本膨胀。
+
+### 6.8 无边框窗口控件与功能区避让（V2.2）
+
+* 中文：右上角最小化/最大化/关闭三按钮采用贴边布局（`top: 0; right: 0`），去除外框与容器底色，仅保留按钮 hover 反馈；以保证无边框窗口视觉一致性。
+* English: The top-right minimize/maximize/close controls must be edge-aligned (`top: 0; right: 0`), with no surrounding border or container fill, while retaining button hover feedback for a frameless and integrated visual style.
+* 中文：主内容区域增加统一顶部安全区，避免各模块右侧功能区与窗口三按钮发生遮挡或点击冲突。
+* English: A global top safe-area must be reserved for the main content to prevent overlap and click conflicts between module right-side action areas and window control buttons.
 * 后续正式开发（Electron + Vue）必须保持同等模块边界：页面层、公共组件层、业务状态层分离。
 * `ui/frontend_demo.html` 保留为回退与视觉对照基线，不再继续承载新增交互逻辑。
 
