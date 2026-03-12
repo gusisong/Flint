@@ -1,0 +1,91 @@
+:root {
+  --bg: #f6f7f3;
+  --ink: #0f1720;
+  --muted: #5c6670;
+  --card: #ffffff;
+  --line: #d9e0d8;
+  --brand: #0c8f78;
+  --brand-soft: #e8f5f1;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "Noto Sans SC", sans-serif;
+  color: var(--ink);
+  background: var(--bg);
+}
+
+.shell {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 260px 1fr;
+}
+
+.nav {
+  border-right: 1px solid var(--line);
+  background: linear-gradient(180deg, #ffffff 0%, #f2f8f6 100%);
+  padding: 20px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.brand {
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.sub {
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+
+.nav-btn {
+  border: 1px solid var(--line);
+  background: var(--card);
+  color: var(--ink);
+  border-radius: 12px;
+  padding: 10px 12px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.nav-btn.active {
+  background: linear-gradient(135deg, #0c8f78, #0da387);
+  border-color: transparent;
+  color: #fff;
+}
+
+.main {
+  padding: 18px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.header h1 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.meta {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.panel {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--card);
+  min-height: 78vh;
+  padding: 18px;
+}

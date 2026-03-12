@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Flint UI Demo (Modular)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Noto+Sans+SC:wght@400;500;700&family=Material+Symbols+Outlined:wght@300" rel="stylesheet">
+  <link rel="stylesheet" href="./styles/main.css">
+</head>
+<body>
+  <div class="shell">
+    <aside class="nav">
+      <div class="brand-row">
+        <div class="brand">
+          <img src="../../assets/Flint_Icon.png" alt="Flint Icon">
+          <span>Flint</span>
+        </div>
+        <button class="theme-toggle" id="themeToggle" title="切换主题">
+          <span class="material-symbols-outlined" id="themeIcon">dark_mode</span>
+        </button>
+      </div>
+      <div class="sub">入厂物流规划运营工具平台</div>
+      <div class="menu">
+        <button class="active" data-target="inbound"><span class="material-symbols-outlined">fact_check</span>Inbound规划审查</button>
+        <button data-target="mail"><span class="material-symbols-outlined">local_shipping</span>运输协议外发</button>
+        <button data-target="supplier"><span class="material-symbols-outlined">badge</span>供应商管理</button>
+        <button data-target="settings"><span class="material-symbols-outlined">settings</span>系统设置</button>
+      </div>
+      <div class="nav-footer">
+        <span>V1.0 · Gu Sisong</span>
+        <span>关于 Flint</span>
+      </div>
+    </aside>
+
+    <main class="main" id="mainViews"></main>
+  </div>
+
+  <div class="modal-overlay" id="addSupplierModal">
+    <div class="modal">
+      <h3><span class="material-symbols-outlined">person_add</span>新增供应商</h3>
+      <div class="form-group">
+        <label>供应商编码</label>
+        <input class="form-input" type="text" id="newSupCode" placeholder="5位编码，如 12345">
+      </div>
+      <div class="form-group">
+        <label>供应商名称</label>
+        <input class="form-input" type="text" id="newSupName" placeholder="供应商全称">
+      </div>
+      <div class="form-group">
+        <label>邮箱</label>
+        <input class="form-input" type="email" id="newSupEmail" placeholder="example@company.com">
+      </div>
+      <div class="modal-actions">
+        <button class="btn ghost" style="width:auto;padding:10px 20px;" onclick="closeModal('addSupplierModal')">取消</button>
+        <button class="btn primary" style="width:auto;padding:10px 20px;" onclick="addSupplier()">添加</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast-container" id="toastContainer"></div>
+
+  <div class="modal-overlay" id="sendMailModal">
+    <div class="modal">
+      <h3><span class="material-symbols-outlined">outgoing_mail</span>发送前确认</h3>
+      <div class="form-group">
+        <label>标题前缀（可为空）</label>
+        <input class="form-input" type="text" id="mailSubjectPrefix" placeholder="例如：Q2，支持任意字符或留空">
+      </div>
+      <div class="form-group" style="font-size:12px;color:var(--muted);line-height:1.5;">
+        标题将按以下结构生成：<br>
+        <strong id="mailSubjectPreview">零件供货方式确认_10243</strong><br>
+        规则：aaa零件供货方式确认_xxxxx（aaa可空，xxxxx为供应商5位编号）。
+      </div>
+      <div class="modal-actions">
+        <button class="btn ghost" style="width:auto;padding:10px 20px;" onclick="closeModal('sendMailModal')">取消</button>
+        <button class="btn cta" style="width:auto;padding:10px 20px;" onclick="confirmSendMails()">发送</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="./scripts/app.js"></script>
+</body>
+</html>

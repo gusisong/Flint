@@ -1,0 +1,32 @@
+<section id="supplier" class="view hidden">
+  <div class="panel">
+    <div class="page-title">
+      <span class="material-symbols-outlined">badge</span>
+      供应商管理
+    </div>
+    <div class="toolbar">
+      <div class="left-actions">
+        <button class="btn primary" onclick="openModal('addSupplier')">新增供应商</button>
+        <button class="btn primary" onclick="editSupplier()">编辑供应商</button>
+      </div>
+      <div class="right-actions"><button class="btn cta" onclick="toggleSelectedSupplierStatus()">切换启用</button></div>
+    </div>
+    <div class="table-wrap">
+      <table id="supplierTableEl">
+        <thead><tr><th>选择</th><th>供应商编码</th><th>供应商名称</th><th>邮箱</th><th>状态</th></tr></thead>
+        <tbody id="supplierBody">
+          <tr data-supplier-code="10243"><td><input type="radio" name="supplierRow" value="10243" aria-label="选择供应商 10243"></td><td>10243</td><td>ACME Corp</td><td>logistics@acme.com</td><td><span class="tag ok">启用</span></td></tr>
+          <tr data-supplier-code="10876"><td><input type="radio" name="supplierRow" value="10876" aria-label="选择供应商 10876"></td><td>10876</td><td>GlobalParts Ltd</td><td>info@globalparts.cn</td><td><span class="tag ok">启用</span></td></tr>
+          <tr data-supplier-code="11502"><td><input type="radio" name="supplierRow" value="11502" aria-label="选择供应商 11502"></td><td>11502</td><td>东方精密</td><td>contact@dfprecision.cn</td><td><span class="tag disabled">停用</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="summary-bar">
+      <div class="stat">
+        <span><span class="dot green"></span> 启用 2</span>
+        <span><span class="dot gray"></span> 停用 1</span>
+      </div>
+      <span>共 3 个供应商</span>
+    </div>
+  </div>
+</section>

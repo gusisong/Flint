@@ -1,0 +1,52 @@
+<section id="mail" class="view hidden">
+  <div class="panel">
+    <div class="page-title">
+      <span class="material-symbols-outlined">local_shipping</span>
+      运输协议外发
+    </div>
+    <div class="toolbar">
+      <div class="left-actions">
+        <button class="btn accent" onclick="openSendMailModal()">开始发送</button>
+        <button class="btn danger" onclick="deleteSelectedMailRows()">删除文件</button>
+      </div>
+      <div class="right-actions">
+        <button class="btn ghost" id="toggleHideSentBtn" onclick="toggleHideSent()">
+          <span class="toggle-emoji" id="toggleHideSentIcon" aria-hidden="true">🚫</span>
+          <span id="toggleHideSentText">隐藏已发送</span>
+        </button>
+        <div class="progress-pill" id="mailProgress">
+          <span class="material-symbols-outlined">schedule</span>
+          <span id="mailProgressText">已发送 0 / 0</span>
+        </div>
+      </div>
+    </div>
+    <div class="dropzone" id="mailDropzone">
+      <span class="material-symbols-outlined">upload_file</span>
+      <span>将待外发文件拖拽到此区域上传（支持分批多次上传）</span>
+    </div>
+    <div class="table-wrap">
+      <table id="mailTableEl">
+        <thead>
+          <tr>
+            <th><input type="checkbox" id="mailSelectAll" aria-label="全选文件"></th>
+            <th>状态</th>
+            <th>文件名</th>
+            <th>供应商号</th>
+            <th>持久化路径</th>
+            <th>邮件标题</th>
+            <th>失败原因</th>
+          </tr>
+        </thead>
+        <tbody id="mailBody"></tbody>
+      </table>
+    </div>
+    <div class="summary-bar">
+      <div class="stat">
+        <span><span class="dot green"></span> 成功 <span id="mailSuccessCount">0</span></span>
+        <span><span class="dot red"></span> 失败 <span id="mailFailedCount">0</span></span>
+        <span><span class="dot gray"></span> 待发 <span id="mailPendingCount">0</span></span>
+      </div>
+      <span id="mailTotalText">共 0 条记录</span>
+    </div>
+  </div>
+</section>

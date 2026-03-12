@@ -25,6 +25,9 @@
       --accent: #3b82c4;
       --accent-bg: #ddeaf8;
       --accent-text: #1a3e66;
+      --cta: #c16b11;
+      --cta-hover: #a75b0d;
+      --cta-soft: #f6e8d8;
       --ghost-bg: #eef2ee;
       --ghost-hover: #dfe5df;
       --ghost-text: #2c3e36;
@@ -54,6 +57,9 @@
       --accent: #5da3e0;
       --accent-bg: #1a2e44;
       --accent-text: #a8d0f5;
+      --cta: #f2a54d;
+      --cta-hover: #f7b569;
+      --cta-soft: #3a2a18;
       --ghost-bg: #1f2b3c;
       --ghost-hover: #273747;
       --ghost-text: #b0bec5;
@@ -230,6 +236,13 @@
       align-items: center;
     }
 
+    .right-actions .btn {
+      width: 112px;
+      padding: 8px 12px;
+      font-size: 12px;
+      border-radius: 9px;
+    }
+
     /* ========== BUTTONS ========== */
     .btn {
       width: 132px;
@@ -276,6 +289,38 @@
       box-shadow: none;
     }
 
+    .btn.cta {
+      background: var(--cta);
+      color: #fff;
+      font-weight: 600;
+    }
+    .btn.cta:hover {
+      background: var(--cta-hover);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 14px rgba(193, 107, 17, 0.28);
+    }
+    .btn.cta:active {
+      transform: translateY(0);
+      box-shadow: none;
+    }
+
+    .btn.danger {
+      background: #f6dada;
+      color: #9a2f2f;
+      border: 1px solid #eeb3b3;
+      font-weight: 600;
+    }
+    .btn.danger:hover {
+      background: #efc4c4;
+      color: #842828;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(191, 59, 59, 0.16);
+    }
+    .btn.danger:active {
+      transform: translateY(0);
+      box-shadow: none;
+    }
+
     /* Ghost: outline/subtle */
     .btn.ghost {
       background: var(--ghost-bg);
@@ -306,8 +351,37 @@
     th { text-align: left; padding: 10px; border-bottom: 2px solid var(--line); font-weight: 600; color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
     td { text-align: left; padding: 10px; border-bottom: 1px solid var(--line); }
 
+    th .col-resizer {
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 8px;
+      height: 100%;
+      cursor: col-resize;
+      user-select: none;
+      touch-action: none;
+    }
+    th .col-resizer::after {
+      content: "";
+      position: absolute;
+      right: 2px;
+      top: 22%;
+      width: 2px;
+      height: 56%;
+      background: var(--line);
+      border-radius: 1px;
+      opacity: 0;
+      transition: opacity 0.15s ease;
+    }
+    th:hover .col-resizer::after { opacity: 0.8; }
+
     tbody tr { transition: background 0.15s ease; cursor: default; }
     tbody tr:hover { background: var(--brand-soft); }
+    #supplierBody tr { cursor: pointer; }
+    #supplierBody tr.row-selected {
+      background: color-mix(in srgb, var(--brand-soft) 72%, transparent);
+      box-shadow: inset 3px 0 0 var(--brand);
+    }
 
     /* ========== STATUS TAGS ========== */
     .tag { border-radius: 999px; padding: 3px 10px; font-size: 12px; font-weight: 600; display: inline-block; }
@@ -315,6 +389,30 @@
     .bad { background: rgba(191, 59, 59, 0.18); color: var(--bad); }
     .warn { background: rgba(195, 106, 14, 0.15); color: var(--warn); }
     .tag.disabled { background: var(--ghost-bg); color: var(--muted); }
+
+    .issue-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .issue-tag {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 108px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 600;
+      text-align: center;
+      line-height: 1.2;
+    }
+    .issue-tag.code { background: rgba(191, 59, 59, 0.18); color: var(--bad); }
+    .issue-tag.method { background: rgba(195, 106, 14, 0.15); color: var(--warn); }
+    .issue-tag.required { background: rgba(78, 100, 134, 0.18); color: #2b4f84; }
+    .issue-tag.distance { background: rgba(59, 130, 196, 0.16); color: #1c4f7f; }
+    .issue-tag.vmi { background: rgba(148, 93, 182, 0.16); color: #6d3f8e; }
+    .issue-tag.whitelist { background: rgba(12, 143, 120, 0.16); color: #0b6f5e; }
 
     /* ========== SUMMARY BAR ========== */
     .summary-bar {
@@ -503,6 +601,88 @@
     .empty-state p { font-size: 14px; text-align: center; }
     .empty-state .hint { font-size: 12px; opacity: 0.7; }
 
+    .dropzone {
+      margin-top: 12px;
+      border: 1.5px dashed var(--line);
+      border-radius: 12px;
+      padding: 14px;
+      color: var(--muted);
+      background: color-mix(in srgb, var(--ghost-bg) 55%, transparent);
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+    }
+    .dropzone .material-symbols-outlined { font-size: 18px; }
+    .dropzone.drag-over {
+      border-color: var(--brand);
+      background: var(--brand-soft);
+      color: var(--brand);
+    }
+
+    .uploaded-files {
+      margin-top: 8px;
+      padding: 8px 10px;
+      border-radius: 10px;
+      border: 1px solid color-mix(in srgb, var(--line) 80%, transparent);
+      background: color-mix(in srgb, var(--ghost-bg) 72%, transparent);
+      font-size: 11px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+    .uploaded-files.empty {
+      opacity: 0.85;
+    }
+    .uploaded-file-list {
+      display: grid;
+      gap: 4px;
+    }
+    .uploaded-file-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .uploaded-file-name {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      flex: 1;
+    }
+    .uploaded-file-remove {
+      border: none;
+      background: transparent;
+      color: var(--muted);
+      padding: 0;
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 6px;
+      transition: background 0.15s ease, color 0.15s ease;
+    }
+    .uploaded-file-remove:hover {
+      background: color-mix(in srgb, var(--ghost-hover) 75%, transparent);
+      color: var(--ink);
+    }
+    .uploaded-file-remove .material-symbols-outlined {
+      font-size: 14px;
+    }
+
+    #toggleHideSentBtn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+    }
+    #toggleHideSentBtn .toggle-emoji {
+      font-size: 13px;
+      line-height: 1;
+    }
+
     /* ========== ANIMATION ========== */
     .hidden { display: none !important; }
 
@@ -536,7 +716,7 @@
           <span class="material-symbols-outlined" id="themeIcon">dark_mode</span>
         </button>
       </div>
-      <div class="sub">物流运营工具平台</div>
+      <div class="sub">入厂物流规划运营工具平台</div>
       <div class="menu">
         <button class="active" data-target="inbound"><span class="material-symbols-outlined">fact_check</span>Inbound规划审查</button>
         <button data-target="mail"><span class="material-symbols-outlined">local_shipping</span>运输协议外发</button>
@@ -559,31 +739,34 @@
           </div>
           <div class="toolbar">
             <div class="left-actions">
-              <button class="btn primary" onclick="simulateFileSelect()">选择文件</button>
               <button class="btn accent" onclick="simulateReview()">开始审查</button>
-              <button class="btn primary" onclick="showToast('日志已刷新', 'info')">刷新日志</button>
             </div>
             <div class="right-actions">
               <button class="btn ghost" onclick="showToast('日志已导出到 data/logs/', 'success')">导出日志</button>
-              <button class="btn ghost" onclick="resetInbound()">重置状态</button>
             </div>
           </div>
+          <div class="dropzone" id="inboundDropzone">
+            <span class="material-symbols-outlined">upload_file</span>
+            <span>将 Inbound 文件拖拽到此区域上传（支持多文件）</span>
+          </div>
+          <div class="uploaded-files empty" id="inboundUploadedFiles">尚未上传文件</div>
           <div class="table-wrap" id="inboundTable">
-            <table>
-              <thead><tr><th>文件</th><th>行号</th><th>问题</th><th>级别</th></tr></thead>
+            <table id="inboundTableEl">
+              <thead><tr><th>文件</th><th>行号</th><th>工厂</th><th>供应商号</th><th>供应商名称</th><th>零件号</th><th>零件名称</th><th>问题</th></tr></thead>
               <tbody id="inboundBody">
-                <tr><td>Inbound_W12.xlsx</td><td>54</td><td>1.发货地编码与供应商号不一致 | 2.Inbound方式填写错误</td><td><span class="tag bad">异常</span></td></tr>
-                <tr><td>Inbound_W12.xlsx</td><td>78</td><td>1.运输距离大于300公里，未规划带VMI</td><td><span class="tag warn">警告</span></td></tr>
-                <tr><td>Inbound_W13.xlsx</td><td>12</td><td>1.缺少必填值</td><td><span class="tag bad">异常</span></td></tr>
+                <tr><td>Inbound_W12.xlsx</td><td>54</td><td>WUH</td><td>10243</td><td>ACME Corp</td><td>P-A1021</td><td>前桥总成</td><td><div class="issue-tags"><span class="issue-tag code">供应商编码不一致</span><span class="issue-tag method">Inbound方式错误</span></div></td></tr>
+                <tr><td>Inbound_W12.xlsx</td><td>78</td><td>SHA</td><td>10876</td><td>GlobalParts Ltd</td><td>P-B7780</td><td>制动卡钳</td><td><div class="issue-tags"><span class="issue-tag distance">运输距离超限</span></div></td></tr>
+                <tr><td>Inbound_W13.xlsx</td><td>12</td><td>NAN</td><td>11502</td><td>东方精密</td><td>P-C4412</td><td>稳定杆</td><td><div class="issue-tags"><span class="issue-tag required">缺少必填字段</span></div></td></tr>
               </tbody>
             </table>
           </div>
           <div class="summary-bar" id="inboundSummary">
             <div class="stat">
-              <span><span class="dot red"></span> 异常 2</span>
-              <span><span class="dot orange"></span> 警告 1</span>
+              <span><span class="dot red"></span> 编码相关 1</span>
+              <span><span class="dot orange"></span> 距离相关 1</span>
+              <span><span class="dot gray"></span> 规则相关 1</span>
             </div>
-            <span>共 3 条异常 · 2 个文件</span>
+            <span>共 3 条问题 · 2 个文件</span>
           </div>
         </div>
       </section>
@@ -597,33 +780,47 @@
           </div>
           <div class="toolbar">
             <div class="left-actions">
-              <button class="btn primary" onclick="simulateScan()">扫描工作区</button>
-              <button class="btn accent" onclick="simulateSend()">开始发送</button>
+              <button class="btn accent" onclick="openSendMailModal()">开始发送</button>
+              <button class="btn danger" onclick="deleteSelectedMailRows()">删除文件</button>
             </div>
             <div class="right-actions">
+              <button class="btn ghost" id="toggleHideSentBtn" onclick="toggleHideSent()">
+                <span class="toggle-emoji" id="toggleHideSentIcon" aria-hidden="true">🚫</span>
+                <span id="toggleHideSentText">隐藏已发送</span>
+              </button>
               <div class="progress-pill" id="mailProgress">
                 <span class="material-symbols-outlined">schedule</span>
-                <span id="mailProgressText">已发送 1 / 2</span>
+                <span id="mailProgressText">已发送 0 / 0</span>
               </div>
-              <button class="btn ghost" onclick="showToast('正在重试失败任务...', 'info')">重试失败</button>
             </div>
           </div>
+          <div class="dropzone" id="mailDropzone">
+            <span class="material-symbols-outlined">upload_file</span>
+            <span>将待外发文件拖拽到此区域上传（支持分批多次上传）</span>
+          </div>
           <div class="table-wrap">
-            <table>
-              <thead><tr><th>状态</th><th>项目</th><th>供应商</th><th>附件数</th><th>失败原因</th></tr></thead>
-              <tbody id="mailBody">
-                <tr><td><span class="tag ok">SUCCESS</span></td><td>Q2_AP_Review</td><td>10243</td><td>2</td><td>-</td></tr>
-                <tr><td><span class="tag bad">FAILED</span></td><td>Q2_AP_Review</td><td>10876</td><td>3</td><td>SMTP 421 限流</td></tr>
-              </tbody>
+            <table id="mailTableEl">
+              <thead>
+                <tr>
+                  <th><input type="checkbox" id="mailSelectAll" aria-label="全选文件"></th>
+                  <th>状态</th>
+                  <th>文件名</th>
+                  <th>供应商号</th>
+                  <th>持久化路径</th>
+                  <th>邮件标题</th>
+                  <th>失败原因</th>
+                </tr>
+              </thead>
+              <tbody id="mailBody"></tbody>
             </table>
           </div>
           <div class="summary-bar">
             <div class="stat">
-              <span><span class="dot green"></span> 成功 1</span>
-              <span><span class="dot red"></span> 失败 1</span>
-              <span><span class="dot gray"></span> 待发 0</span>
+              <span><span class="dot green"></span> 成功 <span id="mailSuccessCount">0</span></span>
+              <span><span class="dot red"></span> 失败 <span id="mailFailedCount">0</span></span>
+              <span><span class="dot gray"></span> 待发 <span id="mailPendingCount">0</span></span>
             </div>
-            <span>共 2 条记录</span>
+            <span id="mailTotalText">共 0 条记录</span>
           </div>
         </div>
       </section>
@@ -638,18 +835,17 @@
           <div class="toolbar">
             <div class="left-actions">
               <button class="btn primary" onclick="openModal('addSupplier')">新增供应商</button>
-              <button class="btn primary" onclick="showToast('请先选择一个供应商', 'info')">编辑供应商</button>
-              <button class="btn primary" onclick="showToast('列表已刷新', 'success')">刷新列表</button>
+              <button class="btn primary" onclick="editSupplier()">编辑供应商</button>
             </div>
-            <div class="right-actions"><button class="btn ghost">切换启用</button></div>
+            <div class="right-actions"><button class="btn cta" onclick="toggleSelectedSupplierStatus()">切换启用</button></div>
           </div>
           <div class="table-wrap">
-            <table>
-              <thead><tr><th>供应商编码</th><th>供应商名称</th><th>邮箱</th><th>状态</th></tr></thead>
+            <table id="supplierTableEl">
+              <thead><tr><th>选择</th><th>供应商编码</th><th>供应商名称</th><th>邮箱</th><th>状态</th></tr></thead>
               <tbody id="supplierBody">
-                <tr><td>10243</td><td>ACME Corp</td><td>logistics@acme.com</td><td><span class="tag ok">启用</span></td></tr>
-                <tr><td>10876</td><td>GlobalParts Ltd</td><td>info@globalparts.cn</td><td><span class="tag ok">启用</span></td></tr>
-                <tr><td>11502</td><td>东方精密</td><td>contact@dfprecision.cn</td><td><span class="tag disabled">停用</span></td></tr>
+                <tr data-supplier-code="10243"><td><input type="radio" name="supplierRow" value="10243" aria-label="选择供应商 10243"></td><td>10243</td><td>ACME Corp</td><td>logistics@acme.com</td><td><span class="tag ok">启用</span></td></tr>
+                <tr data-supplier-code="10876"><td><input type="radio" name="supplierRow" value="10876" aria-label="选择供应商 10876"></td><td>10876</td><td>GlobalParts Ltd</td><td>info@globalparts.cn</td><td><span class="tag ok">启用</span></td></tr>
+                <tr data-supplier-code="11502"><td><input type="radio" name="supplierRow" value="11502" aria-label="选择供应商 11502"></td><td>11502</td><td>东方精密</td><td>contact@dfprecision.cn</td><td><span class="tag disabled">停用</span></td></tr>
               </tbody>
             </table>
           </div>
@@ -675,7 +871,7 @@
               <button class="btn primary" onclick="showToast('配置已读取', 'success')">读取配置</button>
             </div>
             <div class="right-actions">
-              <button class="btn accent" onclick="showToast('配置已保存', 'success')">保存配置</button>
+              <button class="btn cta" onclick="showToast('配置已保存', 'success')">保存配置</button>
             </div>
           </div>
 
@@ -754,6 +950,26 @@ Flint Transportation System
   <!-- ========== TOAST CONTAINER ========== -->
   <div class="toast-container" id="toastContainer"></div>
 
+  <!-- ========== MODAL: 发送邮件确认 ========== -->
+  <div class="modal-overlay" id="sendMailModal">
+    <div class="modal">
+      <h3><span class="material-symbols-outlined">outgoing_mail</span>发送前确认</h3>
+      <div class="form-group">
+        <label>标题前缀（可为空）</label>
+        <input class="form-input" type="text" id="mailSubjectPrefix" placeholder="例如：Q2，支持任意字符或留空">
+      </div>
+      <div class="form-group" style="font-size:12px;color:var(--muted);line-height:1.5;">
+        标题将按以下结构生成：<br>
+        <strong id="mailSubjectPreview">零件供货方式确认_10243</strong><br>
+        规则：`aaa零件供货方式确认_xxxxx`（`aaa`可空，`xxxxx`为供应商5位编号）。
+      </div>
+      <div class="modal-actions">
+        <button class="btn ghost" style="width:auto;padding:10px 20px;" onclick="closeModal('sendMailModal')">取消</button>
+        <button class="btn cta" style="width:auto;padding:10px 20px;" onclick="confirmSendMails()">发送</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     /* ========== NAV SWITCHING ========== */
     const tabs = document.querySelectorAll('.menu button');
@@ -818,7 +1034,8 @@ Flint Transportation System
       const tbody = document.getElementById('supplierBody');
       const tr = document.createElement('tr');
       tr.style.animation = 'reveal 0.3s ease';
-      tr.innerHTML = `<td>${code}</td><td>${name}</td><td>${email}</td><td><span class="tag ok">启用</span></td>`;
+      tr.setAttribute('data-supplier-code', code);
+      tr.innerHTML = `<td><input type="radio" name="supplierRow" value="${code}" aria-label="选择供应商 ${code}"></td><td>${code}</td><td>${name}</td><td>${email}</td><td><span class="tag ok">启用</span></td>`;
       tbody.appendChild(tr);
       closeModal('addSupplierModal');
       showToast(`供应商 ${name} 已添加`, 'success');
@@ -827,76 +1044,540 @@ Flint Transportation System
       document.getElementById('newSupEmail').value = '';
     }
 
-    /* ========== INTERACTIVE: SIMULATE FILE SELECT ========== */
-    function simulateFileSelect() {
-      showToast('已选择 3 个文件', 'info');
+    function getSelectedSupplierRow() {
+      const selected = document.querySelector('input[name="supplierRow"]:checked');
+      return selected ? selected.closest('tr') : null;
+    }
+
+    function editSupplier() {
+      const row = getSelectedSupplierRow();
+      if (!row) {
+        showToast('请先选择一个供应商', 'info');
+        return;
+      }
+      const supplierName = row.children[2].textContent;
+      showToast(`已进入 ${supplierName} 编辑模式`, 'info');
+    }
+
+    function toggleSelectedSupplierStatus() {
+      const row = getSelectedSupplierRow();
+      if (!row) {
+        showToast('请先选择一个供应商', 'info');
+        return;
+      }
+      const tag = row.querySelector('.tag');
+      const code = row.getAttribute('data-supplier-code') || '-';
+      const isEnabled = tag.textContent.trim() === '启用';
+      if (isEnabled) {
+        tag.textContent = '停用';
+        tag.className = 'tag disabled';
+      } else {
+        tag.textContent = '启用';
+        tag.className = 'tag ok';
+      }
+      showToast(`供应商 ${code} 状态已切换`, 'success');
+    }
+
+    const MAIL_STORAGE_KEY = 'flint.mailRows.v2';
+    const MAIL_HIDE_SENT_KEY = 'flint.mailHideSent.v2';
+    const INBOUND_UPLOAD_KEY = 'flint.inboundUploads.v1';
+    const TABLE_WIDTH_KEY = 'flint.tableWidths.v1';
+    const MAIL_PERSIST_DIR = 'data/mail_uploads/';
+    let mailRows = [];
+    let hideSent = false;
+    let inboundSelectedFiles = [];
+    let inboundUploadSeq = 0;
+
+    function saveMailRows() {
+      localStorage.setItem(MAIL_STORAGE_KEY, JSON.stringify(mailRows));
+    }
+
+    function loadMailRows() {
+      const raw = localStorage.getItem(MAIL_STORAGE_KEY);
+      if (!raw) {
+        mailRows = [];
+        return;
+      }
+      try {
+        mailRows = JSON.parse(raw);
+      } catch {
+        mailRows = [];
+      }
+    }
+
+    function extractSupplierCode(fileName) {
+      const match = fileName.match(/_(\d{5})_/);
+      if (match) {
+        return match[1];
+      }
+      return String(Math.floor(10000 + Math.random() * 90000));
+    }
+
+    function makeSubject(prefix, supplierCode) {
+      const safePrefix = (prefix || '').trim();
+      return `${safePrefix}零件供货方式确认_${supplierCode}`;
+    }
+
+    function statusTag(status) {
+      if (status === 'SUCCESS') {
+        return '<span class="tag ok">SUCCESS</span>';
+      }
+      if (status === 'FAILED') {
+        return '<span class="tag bad">FAILED</span>';
+      }
+      return '<span class="tag" style="background:var(--accent-bg);color:var(--accent-text)">PENDING</span>';
+    }
+
+    function updateMailSummary() {
+      const success = mailRows.filter((x) => x.status === 'SUCCESS').length;
+      const failed = mailRows.filter((x) => x.status === 'FAILED').length;
+      const pending = mailRows.filter((x) => x.status === 'PENDING').length;
+      document.getElementById('mailSuccessCount').textContent = String(success);
+      document.getElementById('mailFailedCount').textContent = String(failed);
+      document.getElementById('mailPendingCount').textContent = String(pending);
+      document.getElementById('mailTotalText').textContent = `共 ${mailRows.length} 条记录`;
+      document.getElementById('mailProgressText').textContent = `已发送 ${success} / ${mailRows.length}`;
+    }
+
+    function updateHideSentToggleButton() {
+      const icon = document.getElementById('toggleHideSentIcon');
+      const text = document.getElementById('toggleHideSentText');
+      if (!icon || !text) {
+        return;
+      }
+      if (hideSent) {
+        icon.textContent = '👁';
+        text.textContent = '显示已发送';
+        return;
+      }
+      icon.textContent = '🚫';
+      text.textContent = '隐藏已发送';
+    }
+
+    function saveInboundSelectedFiles() {
+      const payload = inboundSelectedFiles.map((entry) => ({
+        id: entry.id,
+        fileName: entry.fileName || entry.file?.name || ''
+      }));
+      localStorage.setItem(INBOUND_UPLOAD_KEY, JSON.stringify(payload));
+    }
+
+    function loadInboundSelectedFiles() {
+      const raw = localStorage.getItem(INBOUND_UPLOAD_KEY);
+      if (!raw) {
+        inboundSelectedFiles = [];
+        return;
+      }
+      try {
+        const parsed = JSON.parse(raw);
+        inboundSelectedFiles = Array.isArray(parsed)
+          ? parsed
+            .filter((entry) => entry && entry.id && entry.fileName)
+            .map((entry) => ({ id: entry.id, fileName: entry.fileName }))
+          : [];
+      } catch {
+        inboundSelectedFiles = [];
+      }
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;');
+    }
+
+    function renderInboundUploadedFiles() {
+      const container = document.getElementById('inboundUploadedFiles');
+      if (!container) {
+        return;
+      }
+      if (inboundSelectedFiles.length === 0) {
+        container.classList.add('empty');
+        container.textContent = '尚未上传文件';
+        return;
+      }
+
+      container.classList.remove('empty');
+      const visible = inboundSelectedFiles.slice(0, 10);
+      const hiddenCount = Math.max(0, inboundSelectedFiles.length - visible.length);
+      const listHtml = visible.map((entry) => {
+        const fileName = entry.fileName || entry.file?.name || '未知文件';
+        return `<div class="uploaded-file-item">
+          <span class="uploaded-file-name" title="${escapeHtml(fileName)}">${escapeHtml(fileName)}</span>
+          <button class="uploaded-file-remove" type="button" title="移除文件" aria-label="移除 ${escapeHtml(fileName)}" onclick="removeInboundFile('${entry.id}')">
+            <span class="material-symbols-outlined">close</span>
+          </button>
+        </div>`;
+      }).join('');
+
+      const summary = `<div>已上传 ${inboundSelectedFiles.length} 个文件</div>`;
+      const foldHint = hiddenCount > 0 ? `<div>其余 ${hiddenCount} 个文件已折叠显示</div>` : '';
+      container.innerHTML = `${summary}<div class="uploaded-file-list">${listHtml}</div>${foldHint}`;
+    }
+
+    function removeInboundFile(fileId) {
+      const previous = inboundSelectedFiles.length;
+      inboundSelectedFiles = inboundSelectedFiles.filter((entry) => entry.id !== fileId);
+      if (inboundSelectedFiles.length === previous) {
+        return;
+      }
+      saveInboundSelectedFiles();
+      renderInboundUploadedFiles();
+      showToast(`已移除文件，剩余 ${inboundSelectedFiles.length} 个（已同步队列）`, 'info');
+    }
+
+    function updateSelectAllState() {
+      const visibleRows = mailRows.filter((x) => !(hideSent && x.status === 'SUCCESS'));
+      const allSelected = visibleRows.length > 0 && visibleRows.every((x) => x.selected);
+      const selectAll = document.getElementById('mailSelectAll');
+      selectAll.checked = allSelected;
+      selectAll.indeterminate = !allSelected && visibleRows.some((x) => x.selected);
+    }
+
+    function renderMailTable() {
+      const tbody = document.getElementById('mailBody');
+      const visible = mailRows.filter((x) => !(hideSent && x.status === 'SUCCESS'));
+      if (visible.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" style="color:var(--muted);">暂无文件，请拖拽文件到上方上传区</td></tr>';
+        updateMailSummary();
+        updateSelectAllState();
+        enhanceAllTables();
+        return;
+      }
+      tbody.innerHTML = visible.map((row) => {
+        const reason = row.failReason || '-';
+        const subject = row.subject || '-';
+        return `<tr data-mail-id="${row.id}">
+          <td><input type="checkbox" ${row.selected ? 'checked' : ''} aria-label="选择文件 ${row.fileName}" onclick="toggleMailRowSelect('${row.id}', event)"></td>
+          <td>${statusTag(row.status)}</td>
+          <td>${row.fileName}</td>
+          <td>${row.supplierCode}</td>
+          <td>${row.storedPath}</td>
+          <td>${subject}</td>
+          <td>${reason}</td>
+        </tr>`;
+      }).join('');
+      updateMailSummary();
+      updateSelectAllState();
+      enhanceAllTables();
+    }
+
+    function toggleMailRowSelect(id, event) {
+      if (event) {
+        event.stopPropagation();
+      }
+      mailRows = mailRows.map((x) => x.id === id ? { ...x, selected: !x.selected } : x);
+      saveMailRows();
+      renderMailTable();
+    }
+
+    function buildMailRowsFromFiles(files) {
+      return files.map((file) => {
+        const supplierCode = extractSupplierCode(file.name);
+        return {
+          id: `${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+          selected: false,
+          status: 'PENDING',
+          fileName: file.name,
+          supplierCode,
+          storedPath: `${MAIL_PERSIST_DIR}${Date.now()}_${file.name}`,
+          subject: '',
+          failReason: ''
+        };
+      });
+    }
+
+    function handleMailDropFiles(files) {
+      if (!files.length) {
+        return;
+      }
+      const newRows = buildMailRowsFromFiles(files);
+      mailRows = [...mailRows, ...newRows];
+      saveMailRows();
+      renderMailTable();
+      showToast(`已上传 ${files.length} 个文件，持久化目录：${MAIL_PERSIST_DIR}`, 'success');
+    }
+
+    function handleInboundDropFiles(files) {
+      if (!files.length) {
+        return;
+      }
+      const nextEntries = files.map((file) => ({
+        id: `inbound_${Date.now()}_${inboundUploadSeq++}`,
+        file,
+        fileName: file.name,
+      }));
+      inboundSelectedFiles = [...inboundSelectedFiles, ...nextEntries];
+      saveInboundSelectedFiles();
+      renderInboundUploadedFiles();
+      showToast(`Inbound 已接收 ${inboundSelectedFiles.length} 个文件（已同步队列）`, 'success');
+    }
+
+    function setupDropzone(elementId, onFilesDropped) {
+      const zone = document.getElementById(elementId);
+      if (!zone) {
+        return;
+      }
+      ['dragenter', 'dragover', 'dragleave', 'drop'].forEach((eventName) => {
+        zone.addEventListener(eventName, (event) => {
+          event.preventDefault();
+          event.stopPropagation();
+        });
+      });
+      zone.addEventListener('dragenter', () => zone.classList.add('drag-over'));
+      zone.addEventListener('dragover', () => zone.classList.add('drag-over'));
+      zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+      zone.addEventListener('drop', (event) => {
+        zone.classList.remove('drag-over');
+        const files = Array.from(event.dataTransfer?.files || []);
+        onFilesDropped(files);
+      });
+    }
+
+    function deleteSelectedMailRows() {
+      const selected = mailRows.filter((x) => x.selected);
+      if (selected.length === 0) {
+        showToast('请先选择需要删除的行项目', 'info');
+        return;
+      }
+      mailRows = mailRows.filter((x) => !x.selected);
+      saveMailRows();
+      renderMailTable();
+      showToast(`已删除 ${selected.length} 条记录，并同步删除持久化文件`, 'success');
+    }
+
+    function toggleHideSent() {
+      hideSent = !hideSent;
+      localStorage.setItem(MAIL_HIDE_SENT_KEY, hideSent ? '1' : '0');
+      updateHideSentToggleButton();
+      renderMailTable();
+    }
+
+    function openSendMailModal() {
+      const selected = mailRows.filter((x) => x.selected);
+      if (selected.length === 0) {
+        showToast('请先在列表中勾选需要外发的文件', 'info');
+        return;
+      }
+      const previewCode = selected[0].supplierCode;
+      const prefixInput = document.getElementById('mailSubjectPrefix');
+      document.getElementById('mailSubjectPreview').textContent = makeSubject(prefixInput.value, previewCode);
+      openModal('sendMail');
+    }
+
+    function confirmSendMails() {
+      const prefix = document.getElementById('mailSubjectPrefix').value || '';
+      const queue = mailRows.filter((x) => x.selected);
+      if (queue.length === 0) {
+        closeModal('sendMailModal');
+        showToast('未选择待发送文件', 'error');
+        return;
+      }
+      closeModal('sendMailModal');
+      showToast(`开始队列发送 ${queue.length} 条任务...`, 'info');
+      let idx = 0;
+      const timer = setInterval(() => {
+        if (idx >= queue.length) {
+          clearInterval(timer);
+          saveMailRows();
+          renderMailTable();
+          showToast('队列发送完成', 'success');
+          return;
+        }
+        const current = queue[idx];
+        const isSuccess = Math.random() > 0.2;
+        mailRows = mailRows.map((x) => {
+          if (x.id !== current.id) {
+            return x;
+          }
+          return {
+            ...x,
+            status: isSuccess ? 'SUCCESS' : 'FAILED',
+            selected: false,
+            subject: makeSubject(prefix, x.supplierCode),
+            failReason: isSuccess ? '' : 'SMTP 421 限流'
+          };
+        });
+        idx += 1;
+        saveMailRows();
+        renderMailTable();
+      }, 850);
+    }
+
+    function initializeMailModule() {
+      loadMailRows();
+      hideSent = localStorage.getItem(MAIL_HIDE_SENT_KEY) === '1';
+      updateHideSentToggleButton();
+      document.getElementById('mailSelectAll').addEventListener('change', (event) => {
+        const checked = event.target.checked;
+        mailRows = mailRows.map((x) => {
+          if (hideSent && x.status === 'SUCCESS') {
+            return x;
+          }
+          return { ...x, selected: checked };
+        });
+        saveMailRows();
+        renderMailTable();
+      });
+      document.getElementById('mailSubjectPrefix').addEventListener('input', () => {
+        const selected = mailRows.find((x) => x.selected) || mailRows[0] || { supplierCode: '10243' };
+        const prefix = document.getElementById('mailSubjectPrefix').value || '';
+        document.getElementById('mailSubjectPreview').textContent = makeSubject(prefix, selected.supplierCode);
+      });
+
+      setupDropzone('mailDropzone', handleMailDropFiles);
+
+      renderMailTable();
+    }
+
+    function initializeSupplierRowClickSelect() {
+      const tbody = document.getElementById('supplierBody');
+      const refreshSelectionStyle = () => {
+        tbody.querySelectorAll('tr').forEach((tr) => tr.classList.remove('row-selected'));
+        const selected = tbody.querySelector('input[name="supplierRow"]:checked');
+        if (selected) {
+          selected.closest('tr')?.classList.add('row-selected');
+        }
+      };
+      tbody.addEventListener('click', (event) => {
+        const tr = event.target.closest('tr');
+        if (!tr) {
+          return;
+        }
+        const radio = tr.querySelector('input[name="supplierRow"]');
+        if (!radio) {
+          return;
+        }
+        radio.checked = true;
+        refreshSelectionStyle();
+      });
+      tbody.addEventListener('change', refreshSelectionStyle);
+      refreshSelectionStyle();
+    }
+
+    function getTableWidthStore() {
+      const raw = localStorage.getItem(TABLE_WIDTH_KEY);
+      if (!raw) {
+        return {};
+      }
+      try {
+        return JSON.parse(raw);
+      } catch {
+        return {};
+      }
+    }
+
+    function saveTableWidth(tableId, colIndex, width) {
+      const store = getTableWidthStore();
+      if (!store[tableId]) {
+        store[tableId] = {};
+      }
+      store[tableId][colIndex] = width;
+      localStorage.setItem(TABLE_WIDTH_KEY, JSON.stringify(store));
+    }
+
+    function applyStoredWidths(table) {
+      const tableId = table.id;
+      if (!tableId) {
+        return;
+      }
+      const store = getTableWidthStore();
+      const widths = store[tableId] || {};
+      const headers = table.querySelectorAll('thead th');
+      Object.keys(widths).forEach((idx) => {
+        const th = headers[Number(idx)];
+        if (th) {
+          th.style.width = `${widths[idx]}px`;
+          table.style.tableLayout = 'fixed';
+        }
+      });
+    }
+
+    function attachColumnResizers(table) {
+      const headers = table.querySelectorAll('thead th');
+      headers.forEach((th, idx) => {
+        if (th.querySelector('.col-resizer')) {
+          return;
+        }
+        th.style.position = 'relative';
+        const resizer = document.createElement('span');
+        resizer.className = 'col-resizer';
+        resizer.addEventListener('mousedown', (event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          const startX = event.clientX;
+          const startWidth = th.offsetWidth;
+          const onMove = (moveEvent) => {
+            const nextWidth = Math.max(70, startWidth + (moveEvent.clientX - startX));
+            th.style.width = `${nextWidth}px`;
+            table.style.tableLayout = 'fixed';
+          };
+          const onUp = () => {
+            document.removeEventListener('mousemove', onMove);
+            document.removeEventListener('mouseup', onUp);
+            saveTableWidth(table.id, idx, Math.round(th.getBoundingClientRect().width));
+          };
+          document.addEventListener('mousemove', onMove);
+          document.addEventListener('mouseup', onUp);
+        });
+        th.appendChild(resizer);
+      });
+    }
+
+    function enhanceAllTables() {
+      document.querySelectorAll('.table-wrap table').forEach((table) => {
+        if (!table.id) {
+          return;
+        }
+        applyStoredWidths(table);
+        attachColumnResizers(table);
+      });
     }
 
     /* ========== INTERACTIVE: SIMULATE REVIEW ========== */
     function simulateReview() {
+      if (inboundSelectedFiles.length === 0) {
+        showToast('请先拖拽 Inbound 文件到上传区域', 'info');
+        return;
+      }
       const tbody = document.getElementById('inboundBody');
       tbody.innerHTML = `
-        <tr class="skeleton-row"><td><div class="skeleton" style="width:120px"></div></td><td><div class="skeleton" style="width:30px"></div></td><td><div class="skeleton" style="width:280px"></div></td><td><div class="skeleton" style="width:40px"></div></td></tr>
-        <tr class="skeleton-row"><td><div class="skeleton" style="width:100px"></div></td><td><div class="skeleton" style="width:30px"></div></td><td><div class="skeleton" style="width:200px"></div></td><td><div class="skeleton" style="width:40px"></div></td></tr>
-        <tr class="skeleton-row"><td><div class="skeleton" style="width:130px"></div></td><td><div class="skeleton" style="width:30px"></div></td><td><div class="skeleton" style="width:250px"></div></td><td><div class="skeleton" style="width:40px"></div></td></tr>
+        <tr class="skeleton-row"><td><div class="skeleton" style="width:120px"></div></td><td><div class="skeleton" style="width:30px"></div></td><td><div class="skeleton" style="width:48px"></div></td><td><div class="skeleton" style="width:64px"></div></td><td><div class="skeleton" style="width:120px"></div></td><td><div class="skeleton" style="width:90px"></div></td><td><div class="skeleton" style="width:100px"></div></td><td><div class="skeleton" style="width:180px"></div></td></tr>
+        <tr class="skeleton-row"><td><div class="skeleton" style="width:120px"></div></td><td><div class="skeleton" style="width:30px"></div></td><td><div class="skeleton" style="width:48px"></div></td><td><div class="skeleton" style="width:64px"></div></td><td><div class="skeleton" style="width:120px"></div></td><td><div class="skeleton" style="width:90px"></div></td><td><div class="skeleton" style="width:100px"></div></td><td><div class="skeleton" style="width:180px"></div></td></tr>
+        <tr class="skeleton-row"><td><div class="skeleton" style="width:120px"></div></td><td><div class="skeleton" style="width:30px"></div></td><td><div class="skeleton" style="width:48px"></div></td><td><div class="skeleton" style="width:64px"></div></td><td><div class="skeleton" style="width:120px"></div></td><td><div class="skeleton" style="width:90px"></div></td><td><div class="skeleton" style="width:100px"></div></td><td><div class="skeleton" style="width:180px"></div></td></tr>
       `;
       document.getElementById('inboundSummary').innerHTML = '<span style="color:var(--brand)">审查中...</span>';
       setTimeout(() => {
         tbody.innerHTML = `
-          <tr><td>Inbound_W12.xlsx</td><td>54</td><td>1.发货地编码与供应商号不一致 | 2.Inbound方式填写错误</td><td><span class="tag bad">异常</span></td></tr>
-          <tr><td>Inbound_W12.xlsx</td><td>78</td><td>1.运输距离大于300公里，未规划带VMI</td><td><span class="tag warn">警告</span></td></tr>
-          <tr><td>Inbound_W13.xlsx</td><td>12</td><td>1.缺少必填值</td><td><span class="tag bad">异常</span></td></tr>
-          <tr><td>Inbound_W14.xlsx</td><td>33</td><td>1.JIS零件供货距离大于20公里</td><td><span class="tag bad">异常</span></td></tr>
+          <tr><td>Inbound_W12.xlsx</td><td>54</td><td>WUH</td><td>10243</td><td>ACME Corp</td><td>P-A1021</td><td>前桥总成</td><td><div class="issue-tags"><span class="issue-tag code">供应商编码不一致</span><span class="issue-tag method">Inbound方式错误</span></div></td></tr>
+          <tr><td>Inbound_W12.xlsx</td><td>78</td><td>SHA</td><td>10876</td><td>GlobalParts Ltd</td><td>P-B7780</td><td>制动卡钳</td><td><div class="issue-tags"><span class="issue-tag distance">运输距离超限</span></div></td></tr>
+          <tr><td>Inbound_W13.xlsx</td><td>12</td><td>NAN</td><td>11502</td><td>东方精密</td><td>P-C4412</td><td>稳定杆</td><td><div class="issue-tags"><span class="issue-tag required">缺少必填字段</span><span class="issue-tag whitelist">白名单外组合</span></div></td></tr>
+          <tr><td>Inbound_W14.xlsx</td><td>33</td><td>TJN</td><td>12011</td><td>北辰制造</td><td>P-D3320</td><td>散热支架</td><td><div class="issue-tags"><span class="issue-tag vmi">VMI规则冲突</span></div></td></tr>
         `;
         document.getElementById('inboundSummary').innerHTML = `
-          <div class="stat"><span><span class="dot red"></span> 异常 3</span><span><span class="dot orange"></span> 警告 1</span></div>
-          <span>共 4 条异常 · 3 个文件</span>
+          <div class="stat"><span><span class="dot red"></span> 编码相关 1</span><span><span class="dot orange"></span> 距离相关 1</span><span><span class="dot gray"></span> 规则相关 2</span></div>
+          <span>共 4 条问题 · 4 个文件</span>
         `;
-        showToast('审查完成：发现 4 条异常', 'success');
+        enhanceAllTables();
+        showToast(`审查完成：发现 4 条问题（已审查 ${inboundSelectedFiles.length} 个文件）`, 'success');
       }, 1800);
     }
 
-    /* ========== INTERACTIVE: RESET INBOUND ========== */
-    function resetInbound() {
-      document.getElementById('inboundBody').innerHTML = '';
-      document.getElementById('inboundSummary').innerHTML = `
-        <div class="stat"><span><span class="dot gray"></span> 无数据</span></div>
-        <span>共 0 条记录</span>
-      `;
-      showToast('状态已重置', 'info');
-    }
+    initializeSupplierRowClickSelect();
+    initializeMailModule();
+    setupDropzone('inboundDropzone', handleInboundDropFiles);
+    loadInboundSelectedFiles();
+    renderInboundUploadedFiles();
+    ['dragover', 'drop'].forEach((eventName) => {
+      window.addEventListener(eventName, (event) => {
+        event.preventDefault();
+      });
+    });
+    enhanceAllTables();
 
-    /* ========== INTERACTIVE: SIMULATE SCAN ========== */
-    function simulateScan() {
-      const tbody = document.getElementById('mailBody');
-      tbody.innerHTML = `
-        <tr class="skeleton-row"><td><div class="skeleton" style="width:60px"></div></td><td><div class="skeleton" style="width:100px"></div></td><td><div class="skeleton" style="width:50px"></div></td><td><div class="skeleton" style="width:20px"></div></td><td><div class="skeleton" style="width:80px"></div></td></tr>
-      `;
-      setTimeout(() => {
-        tbody.innerHTML = `
-          <tr><td><span class="tag ok">SUCCESS</span></td><td>Q2_AP_Review</td><td>10243</td><td>2</td><td>-</td></tr>
-          <tr><td><span class="tag bad">FAILED</span></td><td>Q2_AP_Review</td><td>10876</td><td>3</td><td>SMTP 421 限流</td></tr>
-          <tr><td><span class="tag" style="background:var(--accent-bg);color:var(--accent-text)">PENDING</span></td><td>Q3_Transport</td><td>11502</td><td>1</td><td>-</td></tr>
-        `;
-        document.getElementById('mailProgressText').textContent = '已发送 1 / 3';
-        showToast('扫描完成：发现 3 个任务', 'success');
-      }, 1200);
-    }
-
-    /* ========== INTERACTIVE: SIMULATE SEND ========== */
-    function simulateSend() {
-      showToast('开始发送邮件...', 'info');
-      let sent = 1;
-      const total = 3;
-      const interval = setInterval(() => {
-        sent++;
-        document.getElementById('mailProgressText').textContent = `已发送 ${sent} / ${total}`;
-        if (sent >= total) {
-          clearInterval(interval);
-          showToast('发送完成', 'success');
-        }
-      }, 1000);
-    }
   </script>
 </body>
 </html>

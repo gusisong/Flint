@@ -1,0 +1,39 @@
+<section id="inbound" class="view">
+  <div class="panel">
+    <div class="page-title">
+      <span class="material-symbols-outlined">fact_check</span>
+      Inbound 规划审查
+    </div>
+    <div class="toolbar">
+      <div class="left-actions">
+        <button class="btn accent" onclick="simulateReview()">开始审查</button>
+      </div>
+      <div class="right-actions">
+        <button class="btn ghost" onclick="showToast('日志已导出到 data/logs/', 'success')">导出日志</button>
+      </div>
+    </div>
+    <div class="dropzone" id="inboundDropzone">
+      <span class="material-symbols-outlined">upload_file</span>
+      <span>将 Inbound 文件拖拽到此区域上传（支持多文件）</span>
+    </div>
+    <div class="uploaded-files empty" id="inboundUploadedFiles">尚未上传文件</div>
+    <div class="table-wrap" id="inboundTable">
+      <table id="inboundTableEl">
+        <thead><tr><th>文件</th><th>行号</th><th>工厂</th><th>供应商号</th><th>供应商名称</th><th>零件号</th><th>零件名称</th><th>问题</th></tr></thead>
+        <tbody id="inboundBody">
+          <tr><td>Inbound_W12.xlsx</td><td>54</td><td>WUH</td><td>10243</td><td>ACME Corp</td><td>P-A1021</td><td>前桥总成</td><td><div class="issue-tags"><span class="issue-tag code">供应商编码不一致</span><span class="issue-tag method">Inbound方式错误</span></div></td></tr>
+          <tr><td>Inbound_W12.xlsx</td><td>78</td><td>SHA</td><td>10876</td><td>GlobalParts Ltd</td><td>P-B7780</td><td>制动卡钳</td><td><div class="issue-tags"><span class="issue-tag distance">运输距离超限</span></div></td></tr>
+          <tr><td>Inbound_W13.xlsx</td><td>12</td><td>NAN</td><td>11502</td><td>东方精密</td><td>P-C4412</td><td>稳定杆</td><td><div class="issue-tags"><span class="issue-tag required">缺少必填字段</span></div></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="summary-bar" id="inboundSummary">
+      <div class="stat">
+        <span><span class="dot red"></span> 编码相关 1</span>
+        <span><span class="dot orange"></span> 距离相关 1</span>
+        <span><span class="dot gray"></span> 规则相关 1</span>
+      </div>
+      <span>共 3 条问题 · 2 个文件</span>
+    </div>
+  </div>
+</section>
