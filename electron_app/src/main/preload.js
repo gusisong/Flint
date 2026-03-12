@@ -1,7 +1,19 @@
 const { contextBridge, ipcRenderer } = require("electron");
 
 contextBridge.exposeInMainWorld("flintApi", {
+  minimizeWindow: () => ipcRenderer.invoke("window:minimize"),
+  toggleMaximizeWindow: () => ipcRenderer.invoke("window:toggle-maximize"),
+  isWindowMaximized: () => ipcRenderer.invoke("window:is-maximized"),
+  closeWindow: () => ipcRenderer.invoke("window:close"),
+  onWindowMaximizedChanged: (handler) => {
+    const listener = (_event, payload) => handler(payload);
+    ipcRenderer.on("window:maximized-changed", listener);
+    return () => ipcRenderer.removeListener("window:maximized-changed", listener);
+  },
+
   getAppMeta: () => ipcRenderer.invoke("platform:get-app-meta"),
+  checkForUpdate: (manifestUrl) => ipcRenderer.invoke("update:check", { manifestUrl }),
+  downloadAndInstallUpdate: (payload) => ipcRenderer.invoke("update:download-install", payload),
 
   inboundUploadFiles: (files) => ipcRenderer.invoke("inbound:upload-files", { files }),
   inboundGetUploads: () => ipcRenderer.invoke("inbound:get-uploads"),

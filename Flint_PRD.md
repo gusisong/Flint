@@ -311,6 +311,15 @@
 * 更高覆盖率集成测试（UI 交互、SMTP 仿真、并发压力）。
 * 自动更新集成（electron-updater）。
 
+### 7.6 Windows 交付与 OTA 基线（V2.1）
+
+* Windows 交付形态采用 NSIS 安装包（单一 Stable 渠道）。
+* 用户端无需额外安装依赖（Node.js / Python 等均不需要）。
+* OTA 策略采用“检测到新版本后弹窗确认更新”。
+* 更新源采用 OneDrive 公开只读分享链接（后续可升级为鉴权访问）。
+* 更新元数据采用稳定单文件清单（建议 `stable-manifest.json`）+ 版本安装包资产。
+* 客户端更新流程：启动检测 → 版本比较 → 下载 → 校验（SHA256）→ 用户确认重启安装。
+
 ---
 
 ## 8. 已确认决策
@@ -382,6 +391,13 @@
 * 编号 58：模块4已完成配置中心读写链路，SMTP 与发件配置持久化到本地数据目录。
 * 编号 59：Electron 工程新增 Vitest 自动化测试基线，`npm test` 为交付验收必跑项。
 * 编号 60：旧栈（Python + Flet）已正式下线，仓库中所有 Python 运行时代码与依赖文件已清理，运行栈统一为 Electron + Vue。
+* 编号 61：Windows 最终交付形态确定为 NSIS 安装包，默认仅维护 Stable 渠道。
+* 编号 62：OTA 更新体验确定为“检测到新版本后弹窗确认更新”。
+* 编号 63：OTA 资产源确定为 OneDrive 公开只读分享链接。
+* 编号 64：用户侧运行不依赖本机额外开发环境（无需单独安装 Python/Node.js）。
+* 编号 65：桌面端窗口改为无边框设计，并提供 VS Code 风格自定义标题栏（最小化/最大化/关闭）。
+* 编号 66：OTA 入口采用“双入口策略”：应用启动自动检查 + 系统设置页“立即检查更新”手动触发。
+* 编号 67：正式版前端视觉基线强制与 `ui/frontend_demo.html` 保持一致，并要求 `demo_modular` 与正式版同源样式。
 
 ---
 
@@ -451,3 +467,17 @@
     EN: The Electron project now includes a Vitest baseline integrated into `npm test`, used as a release acceptance gate in this delivery.
 32. CN: 旧栈（Python + Flet）已正式下线并完成仓库清理，后续仅维护 Electron + Vue 单栈代码。
     EN: The legacy Python + Flet stack has been formally retired and removed from the repository; future development is maintained on the Electron + Vue single stack only.
+33. CN: Windows 最终交付形态确定为 NSIS 安装包，默认仅维护 Stable 更新通道。
+    EN: Windows final delivery is standardized as an NSIS installer, with Stable as the default and only update channel.
+34. CN: OTA 策略确定为“检测到新版本后弹窗确认更新”，避免静默更新带来的不可控风险。
+    EN: OTA strategy is set to "prompt user for confirmation when a new version is detected", avoiding risks from silent updates.
+35. CN: OTA 资产源确定为 OneDrive 公开只读分享链接，后续可按安全需求升级为鉴权访问。
+    EN: OTA assets will be hosted via a public read-only OneDrive shared link, with a future option to upgrade to authenticated access.
+36. CN: 交付目标明确为用户端免依赖运行，不要求用户额外安装 Python 或 Node.js。
+    EN: Delivery target is dependency-free runtime on user machines, requiring no additional Python or Node.js installation.
+37. CN: 桌面窗口采用无边框壳层，并实现 VS Code 风格自定义标题栏与窗口控制按钮。
+    EN: The desktop shell adopts a frameless window with a VS Code-like custom title bar and window control buttons.
+38. CN: OTA 采用“启动自动检查 + 设置页手动检查”双入口，统一更新流程与用户确认体验。
+    EN: OTA uses a dual-entry model (startup auto-check + manual check in Settings) with a unified confirmation-based update flow.
+39. CN: 前端审查基线升级为“demo_modular 与正式版同时对齐 frontend_demo”，确保样式、动效、颜色、字号一致。
+    EN: Frontend review baseline is upgraded so both demo_modular and production UI must align with frontend_demo for style, motion, colors, and typography consistency.

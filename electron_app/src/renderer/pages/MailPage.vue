@@ -1,16 +1,24 @@
 <template>
-  <div class="mail-wrap">
+  <div class="view">
+    <div class="page-title">
+      <span class="material-symbols-outlined">local_shipping</span>
+      运输协议外发
+    </div>
+
     <div class="toolbar">
       <div class="left-actions">
         <button class="btn accent" type="button" @click="openSendModal">开始发送</button>
         <button class="btn danger" type="button" @click="deleteSelectedRows">删除文件</button>
       </div>
       <div class="right-actions">
-        <button class="btn ghost" type="button" @click="toggleHideSent">
-          <span class="emoji">{{ hideSent ? '👁' : '🚫' }}</span>
+        <button id="toggleHideSentBtn" class="btn ghost" type="button" @click="toggleHideSent">
+          <span class="toggle-emoji">{{ hideSent ? '👁' : '🚫' }}</span>
           <span>{{ hideSent ? '显示已发送' : '隐藏已发送' }}</span>
         </button>
-        <span class="progress-pill">已发送 {{ successCount }} / {{ rows.length }}</span>
+        <span class="progress-pill">
+          <span class="material-symbols-outlined">schedule</span>
+          <span>已发送 {{ successCount }} / {{ rows.length }}</span>
+        </span>
       </div>
     </div>
 
@@ -22,72 +30,86 @@
       @dragleave.prevent="isDragOver = false"
       @drop.prevent="onDrop"
     >
+      <span class="material-symbols-outlined">upload_file</span>
       <span>将待外发文件拖拽到此区域上传（支持分批多次上传）</span>
     </div>
 
-    <table class="mail-table">
-      <thead>
-        <tr>
-          <th>
-            <input
-              type="checkbox"
-              :checked="allVisibleSelected"
-              :indeterminate.prop="indeterminateSelectAll"
-              @change="toggleSelectAll"
-              aria-label="全选文件"
-            >
-          </th>
-          <th>状态</th>
-          <th>文件名</th>
-          <th>供应商号</th>
-          <th>持久化路径</th>
-          <th>邮件标题</th>
-          <th>失败原因</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-if="visibleRows.length === 0">
-          <td colspan="7" class="empty-row">暂无文件，请拖拽文件到上方上传区</td>
-        </tr>
-        <tr v-for="row in visibleRows" :key="row.id">
-          <td>
-            <input
-              type="checkbox"
-              :checked="row.selected"
-              :aria-label="`选择文件 ${row.fileName}`"
-              @change="toggleRow(row.id)"
-            >
-          </td>
-          <td>
-            <span class="status-tag" :class="statusClass(row.status)">{{ row.status }}</span>
-          </td>
-          <td>{{ row.fileName }}</td>
-          <td>{{ row.supplierCode }}</td>
-          <td>{{ row.storedPath }}</td>
-          <td>{{ row.subject || '-' }}</td>
-          <td>{{ row.failReason || '-' }}</td>
-        </tr>
-      </tbody>
-    </table>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>
+              <input
+                type="checkbox"
+                :checked="allVisibleSelected"
+                :indeterminate.prop="indeterminateSelectAll"
+                @change="toggleSelectAll"
+                aria-label="全选文件"
+              >
+            </th>
+            <th>状态</th>
+            <th>文件名</th>
+            <th>供应商号</th>
+            <th>持久化路径</th>
+            <th>邮件标题</th>
+            <th>失败原因</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-if="visibleRows.length === 0">
+            <td colspan="7">暂无文件，请拖拽文件到上方上传区</td>
+          </tr>
+          <tr v-for="row in visibleRows" :key="row.id">
+            <td>
+              <input
+                type="checkbox"
+                :checked="row.selected"
+                :aria-label="`选择文件 ${row.fileName}`"
+                @change="toggleRow(row.id)"
+              >
+            </td>
+            <td>
+              <span class="tag" :class="statusClass(row.status)">{{ row.status }}</span>
+            </td>
+            <td>{{ row.fileName }}</td>
+            <td>{{ row.supplierCode }}</td>
+            <td>{{ row.storedPath }}</td>
+            <td>{{ row.subject || '-' }}</td>
+            <td>{{ row.failReason || '-' }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
 
-    <div class="summary">
-      <span>成功 {{ successCount }}</span>
-      <span>失败 {{ failedCount }}</span>
-      <span>待发 {{ pendingCount }}</span>
+    <div class="summary-bar">
+      <div class="stat">
+        <span><span class="dot green"></span> 成功 {{ successCount }}</span>
+        <span><span class="dot red"></span> 失败 {{ failedCount }}</span>
+        <span><span class="dot gray"></span> 待发 {{ pendingCount }}</span>
+      </div>
       <span>共 {{ rows.length }} 条记录</span>
     </div>
 
-    <div v-if="banner" class="banner">{{ banner }}</div>
+    <div v-if="banner" style="margin-top:8px;font-size:12px;color:var(--brand);">{{ banner }}</div>
 
-    <div v-if="isSendModalOpen" class="modal-mask" @click.self="isSendModalOpen = false">
+    <div :class="['modal-overlay', { show: isSendModalOpen }]" @click.self="isSendModalOpen = false">
       <div class="modal">
-        <h3>发送前确认</h3>
-        <label class="modal-label" for="subjectPrefix">标题前缀（可为空）</label>
-        <input id="subjectPrefix" v-model="subjectPrefix" class="modal-input" type="text" placeholder="例如：Q2">
-        <div class="preview">{{ subjectPreview }}</div>
+        <h3>
+          <span class="material-symbols-outlined">outgoing_mail</span>
+          发送前确认
+        </h3>
+        <div class="form-group">
+          <label>标题前缀（可为空）</label>
+          <input id="subjectPrefix" v-model="subjectPrefix" class="form-input" type="text" placeholder="例如：Q2">
+        </div>
+        <div class="form-group" style="font-size:12px;color:var(--muted);line-height:1.5;">
+          标题将按以下结构生成：<br>
+          <strong>{{ subjectPreview }}</strong><br>
+          规则：aaa零件供货方式确认_xxxxx（aaa可空，xxxxx为供应商5位编号）。
+        </div>
         <div class="modal-actions">
           <button class="btn ghost" type="button" @click="isSendModalOpen = false">取消</button>
-          <button class="btn accent" type="button" @click="confirmSend">发送</button>
+          <button class="btn cta" type="button" @click="confirmSend">发送</button>
         </div>
       </div>
     </div>
@@ -156,7 +178,7 @@ function statusClass(status) {
   if (status === "FAILED") {
     return "bad";
   }
-  return "pending";
+  return "warn";
 }
 
 async function onDrop(event) {
@@ -283,179 +305,3 @@ onBeforeUnmount(() => {
   }
 });
 </script>
-
-<style scoped>
-.mail-wrap {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.toolbar {
-  display: flex;
-  justify-content: space-between;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.left-actions,
-.right-actions {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-}
-
-.btn {
-  border: none;
-  border-radius: 10px;
-  padding: 8px 12px;
-  cursor: pointer;
-}
-
-.btn.accent {
-  background: #ddeaf8;
-  color: #1a3e66;
-  font-weight: 600;
-}
-
-.btn.ghost {
-  border: 1px solid #d9e0d8;
-  background: #eef2ee;
-  color: #2c3e36;
-}
-
-.btn.danger {
-  border: 1px solid #eeb3b3;
-  background: #f6dada;
-  color: #9a2f2f;
-  font-weight: 600;
-}
-
-.emoji {
-  margin-right: 4px;
-}
-
-.progress-pill {
-  font-size: 12px;
-  color: #5c6670;
-  background: #eef2ee;
-  padding: 6px 10px;
-  border-radius: 8px;
-}
-
-.dropzone {
-  border: 1.5px dashed #d9e0d8;
-  border-radius: 12px;
-  padding: 14px;
-  font-size: 12px;
-  color: #5c6670;
-  background: #f5f8f4;
-}
-
-.dropzone.drag-over {
-  border-color: #0c8f78;
-  background: #e8f5f1;
-  color: #0c8f78;
-}
-
-.mail-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 13px;
-}
-
-.mail-table th,
-.mail-table td {
-  border-bottom: 1px solid #d9e0d8;
-  text-align: left;
-  padding: 8px;
-}
-
-.empty-row {
-  color: #5c6670;
-}
-
-.status-tag {
-  display: inline-block;
-  border-radius: 999px;
-  padding: 2px 8px;
-  font-size: 11px;
-  font-weight: 600;
-}
-
-.status-tag.ok {
-  background: rgba(29, 143, 82, 0.18);
-  color: #1d8f52;
-}
-
-.status-tag.bad {
-  background: rgba(191, 59, 59, 0.18);
-  color: #bf3b3b;
-}
-
-.status-tag.pending {
-  background: #ddeaf8;
-  color: #1a3e66;
-}
-
-.summary {
-  display: flex;
-  gap: 14px;
-  font-size: 12px;
-  color: #5c6670;
-}
-
-.banner {
-  font-size: 12px;
-  color: #0c8f78;
-}
-
-.modal-mask {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.38);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 100;
-}
-
-.modal {
-  background: #fff;
-  border-radius: 12px;
-  width: 420px;
-  max-width: calc(100vw - 24px);
-  padding: 16px;
-}
-
-.modal h3 {
-  margin: 0 0 10px;
-}
-
-.modal-label {
-  font-size: 12px;
-  color: #5c6670;
-}
-
-.modal-input {
-  width: 100%;
-  margin-top: 6px;
-  border: 1px solid #d9e0d8;
-  border-radius: 8px;
-  padding: 8px 10px;
-}
-
-.preview {
-  margin-top: 10px;
-  font-size: 12px;
-  color: #5c6670;
-  line-height: 1.5;
-}
-
-.modal-actions {
-  margin-top: 12px;
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-}
-</style>

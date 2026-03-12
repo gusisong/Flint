@@ -1,52 +1,90 @@
 <template>
-  <div class="settings-wrap">
-    <h3>系统设置</h3>
-
-    <div class="form-grid">
-      <label class="field">
-        <span>SMTP Host</span>
-        <input v-model="form.smtpHost" type="text">
-      </label>
-
-      <label class="field">
-        <span>SMTP Port</span>
-        <input v-model.number="form.smtpPort" type="number" min="1" max="65535">
-      </label>
-
-      <label class="field">
-        <span>SMTP User</span>
-        <input v-model="form.smtpUser" type="text">
-      </label>
-
-      <label class="field">
-        <span>SMTP Password</span>
-        <input v-model="form.smtpPassword" type="password">
-      </label>
-
-      <label class="field">
-        <span>发件人名称</span>
-        <input v-model="form.senderName" type="text">
-      </label>
-
-      <label class="field">
-        <span>发件人地址</span>
-        <input v-model="form.senderAddress" type="email">
-      </label>
+  <div class="view">
+    <div class="page-title">
+      <span class="material-symbols-outlined">settings</span>
+      系统设置
     </div>
 
-    <label class="field block">
-      <span>邮件签名</span>
-      <textarea v-model="form.signature" rows="4"></textarea>
-    </label>
-
-    <div class="actions">
-      <button class="btn ghost" type="button" @click="loadConfig">重新加载</button>
-      <button class="btn accent" type="button" @click="saveConfig">保存配置</button>
+    <div class="toolbar">
+      <div class="left-actions">
+        <button class="btn primary" type="button" @click="loadConfig">读取配置</button>
+      </div>
+      <div class="right-actions">
+        <button class="btn ghost" type="button" @click="checkUpdateNow">立即检查更新</button>
+        <button class="btn cta" type="button" @click="saveConfig">保存配置</button>
+      </div>
     </div>
 
-    <div class="meta">
-      <span>最后更新：{{ form.updatedAt || '-' }}</span>
-      <span v-if="banner" class="banner">{{ banner }}</span>
+    <div style="flex:1;overflow-y:auto;margin-top:14px;">
+      <div class="form-section-title">
+        <span class="material-symbols-outlined">mail</span>
+        SMTP 设置
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>SMTP Host</label>
+          <input v-model="form.smtpHost" class="form-input" type="text">
+        </div>
+        <div class="form-group">
+          <label>SMTP Port</label>
+          <input v-model.number="form.smtpPort" class="form-input" type="number" min="1" max="65535">
+        </div>
+        <div class="form-group">
+          <label>用户名</label>
+          <input v-model="form.smtpUser" class="form-input" type="text">
+        </div>
+        <div class="form-group">
+          <label>密码</label>
+          <div class="password-wrap">
+            <input
+              v-model="form.smtpPassword"
+              class="form-input"
+              :type="showPassword ? 'text' : 'password'"
+            >
+            <button class="password-toggle" type="button" @click="showPassword = !showPassword">
+              <span class="material-symbols-outlined">{{ showPassword ? 'visibility' : 'visibility_off' }}</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-section-title">
+        <span class="material-symbols-outlined">rule</span>
+        规则与签名
+      </div>
+      <div class="form-group">
+        <label>发件人名称</label>
+        <input v-model="form.senderName" class="form-input" type="text">
+      </div>
+      <div class="form-group">
+        <label>发件人地址</label>
+        <input v-model="form.senderAddress" class="form-input" type="email">
+      </div>
+      <div class="form-group">
+        <label>签名文本</label>
+        <textarea v-model="form.signature" class="form-input" rows="4"></textarea>
+      </div>
+
+      <div class="form-section-title">
+        <span class="material-symbols-outlined">system_update</span>
+        OTA 更新
+      </div>
+      <div class="form-group">
+        <label>Manifest URL（OneDrive 公开只读链接）</label>
+        <input v-model="form.otaManifestUrl" class="form-input" type="text" placeholder="https://.../stable-manifest.json">
+      </div>
+      <div class="form-group" style="font-size:12px;color:var(--muted);line-height:1.5;">
+        当前版本：{{ updateStatus.currentVersion || 'unknown' }}<br>
+        最新版本：{{ updateStatus.latestVersion || '-' }}
+      </div>
+    </div>
+
+    <div class="summary-bar">
+      <div class="stat">
+        <span><span class="dot gray"></span> 最后更新 {{ form.updatedAt || '-' }}</span>
+      </div>
+      <span>{{ banner || '配置就绪' }}</span>
     </div>
   </div>
 </template>
@@ -62,10 +100,17 @@ const form = reactive({
   senderName: "",
   senderAddress: "",
   signature: "",
+  otaManifestUrl: "",
   updatedAt: "",
 });
 
 const banner = ref("");
+const showPassword = ref(false);
+const updateStatus = reactive({
+  currentVersion: "",
+  latestVersion: "",
+  hasUpdate: false,
+});
 
 function applyConfig(config = {}) {
   form.smtpHost = config.smtpHost || "";
@@ -75,6 +120,7 @@ function applyConfig(config = {}) {
   form.senderName = config.senderName || "";
   form.senderAddress = config.senderAddress || "";
   form.signature = config.signature || "";
+  form.otaManifestUrl = config.otaManifestUrl || "";
   form.updatedAt = config.updatedAt || "";
 }
 
@@ -101,6 +147,7 @@ async function saveConfig() {
     senderName: form.senderName,
     senderAddress: form.senderAddress,
     signature: form.signature,
+    otaManifestUrl: form.otaManifestUrl,
   };
 
   const result = await window.flintApi.settingsSave(payload);
@@ -108,83 +155,36 @@ async function saveConfig() {
   banner.value = "配置已保存";
 }
 
+async function checkUpdateNow() {
+  if (!window.flintApi?.checkForUpdate) {
+    banner.value = "Update IPC 未就绪";
+    return;
+  }
+
+  const result = await window.flintApi.checkForUpdate(form.otaManifestUrl);
+  updateStatus.currentVersion = result?.currentVersion || "";
+  updateStatus.latestVersion = result?.latestVersion || "";
+  updateStatus.hasUpdate = !!result?.hasUpdate;
+
+  if (result?.hasUpdate) {
+    banner.value = `检测到新版本 ${result.latestVersion}`;
+    const ok = window.confirm(
+      `检测到新版本 ${result.latestVersion}（当前 ${result.currentVersion}）\n\n${result.notes || "是否立即下载并安装？"}`,
+    );
+    if (ok && window.flintApi?.downloadAndInstallUpdate) {
+      await window.flintApi.downloadAndInstallUpdate({
+        version: result.latestVersion,
+        installerUrl: result.installerUrl,
+        sha256: result.sha256,
+      });
+    }
+    return;
+  }
+
+  banner.value = result?.reason ? `检查完成：${result.reason}` : "当前已是最新版本";
+}
+
 onMounted(async () => {
   await loadConfig();
 });
 </script>
-
-<style scoped>
-.settings-wrap {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.form-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
-}
-
-.field {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  font-size: 12px;
-  color: #5c6670;
-}
-
-.field input,
-.field textarea {
-  border: 1px solid #d9e0d8;
-  border-radius: 8px;
-  padding: 8px 10px;
-  font-size: 13px;
-}
-
-.field.block {
-  max-width: 100%;
-}
-
-.actions {
-  display: flex;
-  gap: 10px;
-}
-
-.btn {
-  border: none;
-  border-radius: 10px;
-  padding: 8px 12px;
-  cursor: pointer;
-}
-
-.btn.accent {
-  background: #ddeaf8;
-  color: #1a3e66;
-  font-weight: 600;
-}
-
-.btn.ghost {
-  border: 1px solid #d9e0d8;
-  background: #eef2ee;
-  color: #2c3e36;
-}
-
-.meta {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-  font-size: 12px;
-  color: #5c6670;
-}
-
-.banner {
-  color: #0c8f78;
-}
-
-@media (max-width: 900px) {
-  .form-grid {
-    grid-template-columns: 1fr;
-  }
-}
-</style>

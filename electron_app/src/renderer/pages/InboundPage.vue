@@ -1,5 +1,10 @@
 <template>
-  <div class="inbound-wrap">
+  <div class="view">
+    <div class="page-title">
+      <span class="material-symbols-outlined">fact_check</span>
+      Inbound 规划审查
+    </div>
+
     <div class="toolbar">
       <button class="btn accent" type="button" @click="startReview">开始审查</button>
       <button class="btn ghost" type="button" @click="exportLog">导出日志</button>
@@ -13,6 +18,7 @@
       @dragleave.prevent="isDragOver = false"
       @drop.prevent="onDrop"
     >
+      <span class="material-symbols-outlined">upload_file</span>
       <span>将 Inbound 文件拖拽到此区域上传（支持多文件）</span>
     </div>
 
@@ -20,10 +26,12 @@
       <template v-if="uploadedFiles.length === 0">尚未上传文件</template>
       <template v-else>
         <div>已上传 {{ uploadedFiles.length }} 个文件</div>
-        <div class="uploaded-list">
-          <div v-for="entry in displayedFiles" :key="entry.id" class="uploaded-item">
-            <span class="uploaded-name" :title="entry.fileName">{{ entry.fileName }}</span>
-            <button class="remove-btn" type="button" @click="removeFile(entry.id)">x</button>
+        <div class="uploaded-file-list">
+          <div v-for="entry in displayedFiles" :key="entry.id" class="uploaded-file-item">
+            <span class="uploaded-file-name" :title="entry.fileName">{{ entry.fileName }}</span>
+            <button class="uploaded-file-remove" type="button" @click="removeFile(entry.id)">
+              <span class="material-symbols-outlined">close</span>
+            </button>
           </div>
         </div>
         <div v-if="uploadedFiles.length > displayedFiles.length">
@@ -32,37 +40,58 @@
       </template>
     </div>
 
-    <div class="summary">{{ summaryText }}</div>
-    <div v-if="banner" class="banner">{{ banner }}</div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>文件</th>
+            <th>行号</th>
+            <th>工厂</th>
+            <th>供应商号</th>
+            <th>供应商名称</th>
+            <th>零件号</th>
+            <th>零件名称</th>
+            <th>问题</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-if="reviewRows.length === 0">
+            <td colspan="8">暂无审查结果</td>
+          </tr>
+          <tr v-for="row in reviewRows" :key="`${row.file}-${row.line}-${row.supplierCode}`">
+            <td>{{ row.file }}</td>
+            <td>{{ row.line }}</td>
+            <td>{{ row.plant }}</td>
+            <td>{{ row.supplierCode }}</td>
+            <td>{{ row.supplierName }}</td>
+            <td>{{ row.partNo }}</td>
+            <td>{{ row.partName }}</td>
+            <td>
+              <div class="issue-tags">
+                <span
+                  v-for="tag in row.tags"
+                  :key="`${row.file}-${row.line}-${tag}`"
+                  class="issue-tag"
+                  :class="issueTagClass(tag)"
+                >
+                  {{ tag }}
+                </span>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
 
-    <table class="result-table">
-      <thead>
-        <tr>
-          <th>文件</th>
-          <th>行号</th>
-          <th>工厂</th>
-          <th>供应商号</th>
-          <th>供应商名称</th>
-          <th>零件号</th>
-          <th>零件名称</th>
-          <th>问题</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="row in reviewRows" :key="`${row.file}-${row.line}-${row.supplierCode}`">
-          <td>{{ row.file }}</td>
-          <td>{{ row.line }}</td>
-          <td>{{ row.plant }}</td>
-          <td>{{ row.supplierCode }}</td>
-          <td>{{ row.supplierName }}</td>
-          <td>{{ row.partNo }}</td>
-          <td>{{ row.partName }}</td>
-          <td>
-            <span v-for="tag in row.tags" :key="tag" class="issue-tag">{{ tag }}</span>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+    <div class="summary-bar">
+      <div class="stat">
+        <span><span class="dot red"></span> 编码相关 {{ codeIssueCount }}</span>
+        <span><span class="dot orange"></span> 距离相关 {{ distanceIssueCount }}</span>
+        <span><span class="dot gray"></span> 规则相关 {{ ruleIssueCount }}</span>
+      </div>
+      <span>{{ summaryText }}</span>
+    </div>
+    <div v-if="banner" style="margin-top:8px;font-size:12px;color:var(--brand);">{{ banner }}</div>
   </div>
 </template>
 
@@ -76,7 +105,31 @@ const banner = ref("");
 const summaryText = ref("共 0 条问题 · 0 个文件");
 
 const displayedFiles = computed(() => uploadedFiles.value.slice(0, 10));
+const codeIssueCount = computed(() => reviewRows.value.filter((row) => row.tags?.includes("供应商编码不一致")).length);
+const distanceIssueCount = computed(() => reviewRows.value.filter((row) => row.tags?.includes("运输距离超限")).length);
+const ruleIssueCount = computed(
+  () => reviewRows.value.length - codeIssueCount.value - distanceIssueCount.value,
+);
 let offReviewCompleted = null;
+
+function issueTagClass(tag) {
+  if (tag === "供应商编码不一致") {
+    return "code";
+  }
+  if (tag === "Inbound方式错误") {
+    return "method";
+  }
+  if (tag === "缺少必填字段") {
+    return "required";
+  }
+  if (tag === "运输距离超限") {
+    return "distance";
+  }
+  if (tag === "VMI规则冲突") {
+    return "vmi";
+  }
+  return "whitelist";
+}
 
 function updateSummaryWithRows(rows, fileCount) {
   const nextRows = Array.isArray(rows) ? rows : [];
@@ -177,123 +230,3 @@ onBeforeUnmount(() => {
   }
 });
 </script>
-
-<style scoped>
-.inbound-wrap {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.toolbar {
-  display: flex;
-  gap: 10px;
-}
-
-.btn {
-  border: none;
-  border-radius: 10px;
-  padding: 8px 14px;
-  cursor: pointer;
-}
-
-.btn.accent {
-  background: #ddeaf8;
-  color: #1a3e66;
-  font-weight: 600;
-}
-
-.btn.ghost {
-  border: 1px solid #d9e0d8;
-  background: #eef2ee;
-  color: #2c3e36;
-}
-
-.dropzone {
-  border: 1.5px dashed #d9e0d8;
-  border-radius: 12px;
-  padding: 14px;
-  color: #5c6670;
-  background: #f5f8f4;
-}
-
-.dropzone.drag-over {
-  border-color: #0c8f78;
-  background: #e8f5f1;
-  color: #0c8f78;
-}
-
-.uploaded-files {
-  border: 1px solid #d9e0d8;
-  border-radius: 10px;
-  background: #f3f6f2;
-  padding: 8px 10px;
-  font-size: 11px;
-  color: #5c6670;
-}
-
-.uploaded-files.empty {
-  opacity: 0.85;
-}
-
-.uploaded-list {
-  display: grid;
-  gap: 4px;
-  margin-top: 4px;
-}
-
-.uploaded-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 8px;
-}
-
-.uploaded-name {
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  overflow: hidden;
-}
-
-.remove-btn {
-  border: none;
-  background: transparent;
-  color: #5c6670;
-  cursor: pointer;
-  font-size: 12px;
-}
-
-.summary {
-  font-size: 12px;
-  color: #5c6670;
-}
-
-.banner {
-  font-size: 12px;
-  color: #0c8f78;
-}
-
-.result-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 13px;
-}
-
-.result-table th,
-.result-table td {
-  border-bottom: 1px solid #d9e0d8;
-  text-align: left;
-  padding: 8px;
-}
-
-.issue-tag {
-  display: inline-block;
-  margin-right: 6px;
-  margin-bottom: 4px;
-  padding: 2px 8px;
-  border-radius: 999px;
-  background: #e8f5f1;
-  color: #0b6f5e;
-  font-size: 11px;
-}
-</style>

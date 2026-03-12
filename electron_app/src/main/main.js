@@ -1,13 +1,15 @@
-const { app, BrowserWindow, ipcMain } = require("electron");
+const { app, BrowserWindow, ipcMain, Menu } = require("electron");
 const fs = require("node:fs");
 const fsp = require("node:fs/promises");
 const path = require("path");
+const { spawn } = require("node:child_process");
 const {
   sanitizeFileName,
   extractSupplierCode,
   makeSubject,
   toCsvCell,
 } = require("./services/domain-utils");
+const { checkForUpdate, downloadAndVerifyUpdate } = require("./services/ota-service");
 
 const isDev = !!process.env.VITE_DEV_SERVER_URL;
 const MAIL_PERSIST_SUBDIR = "mail_uploads";
@@ -45,6 +47,7 @@ const DEFAULT_SETTINGS = {
   senderName: "Flint Dispatch",
   senderAddress: "flint@example.com",
   signature: "Flint 系统自动发送",
+  otaManifestUrl: "",
   updatedAt: "",
 };
 
@@ -54,6 +57,9 @@ function createWindow() {
     height: 840,
     minWidth: 1100,
     minHeight: 760,
+    frame: false,
+    titleBarStyle: "hidden",
+    autoHideMenuBar: true,
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
       contextIsolation: true,
@@ -61,9 +67,19 @@ function createWindow() {
     },
   });
 
+  Menu.setApplicationMenu(null);
+  win.on("maximize", () => {
+    win.webContents.send("window:maximized-changed", { maximized: true });
+  });
+  win.on("unmaximize", () => {
+    win.webContents.send("window:maximized-changed", { maximized: false });
+  });
+
   if (isDev) {
     win.loadURL(process.env.VITE_DEV_SERVER_URL);
-    win.webContents.openDevTools({ mode: "detach" });
+    if (process.env.FLINT_OPEN_DEVTOOLS === "1") {
+      win.webContents.openDevTools({ mode: "detach" });
+    }
     return;
   }
 
@@ -225,13 +241,99 @@ function normalizeSupplierCode(code) {
 }
 
 function registerIpcHandlers() {
+  ipcMain.handle("window:minimize", async (event) => {
+    const win = BrowserWindow.fromWebContents(event.sender);
+    win?.minimize();
+    return { ok: true };
+  });
+
+  ipcMain.handle("window:toggle-maximize", async (event) => {
+    const win = BrowserWindow.fromWebContents(event.sender);
+    if (!win) {
+      return { ok: false, maximized: false };
+    }
+    if (win.isMaximized()) {
+      win.unmaximize();
+    } else {
+      win.maximize();
+    }
+    return { ok: true, maximized: win.isMaximized() };
+  });
+
+  ipcMain.handle("window:is-maximized", async (event) => {
+    const win = BrowserWindow.fromWebContents(event.sender);
+    return { maximized: !!win?.isMaximized() };
+  });
+
+  ipcMain.handle("window:close", async (event) => {
+    const win = BrowserWindow.fromWebContents(event.sender);
+    win?.close();
+    return { ok: true };
+  });
+
   ipcMain.handle("platform:get-app-meta", async () => {
     await initRuntime();
     return {
       name: "Flint",
       stack: "Electron + Vue",
       phase: "mvp-ipc",
+      version: app.getVersion(),
     };
+  });
+
+  ipcMain.handle("update:check", async (_event, payload = {}) => {
+    await initRuntime();
+    const manifestUrl = String(payload.manifestUrl || runtime.settings?.otaManifestUrl || "").trim();
+    if (!manifestUrl) {
+      return {
+        hasUpdate: false,
+        currentVersion: app.getVersion(),
+        latestVersion: app.getVersion(),
+        reason: "otaManifestUrl 未配置",
+      };
+    }
+    try {
+      return await checkForUpdate({
+        manifestUrl,
+        currentVersion: app.getVersion(),
+      });
+    } catch (error) {
+      return {
+        hasUpdate: false,
+        currentVersion: app.getVersion(),
+        latestVersion: app.getVersion(),
+        reason: error?.message || "检查更新失败",
+      };
+    }
+  });
+
+  ipcMain.handle("update:download-install", async (_event, payload = {}) => {
+    await initRuntime();
+    const installerUrl = String(payload.installerUrl || "").trim();
+    const expectedSha256 = String(payload.sha256 || "").trim();
+    const version = String(payload.version || "").trim();
+    if (!installerUrl || !expectedSha256 || !version) {
+      throw new Error("installerUrl/sha256/version 不能为空");
+    }
+
+    const saveDir = path.join(runtime.dataDir, "updates");
+    const result = await downloadAndVerifyUpdate({
+      installerUrl,
+      expectedSha256,
+      saveDir,
+      version,
+    });
+
+    spawn(result.filePath, [], {
+      detached: true,
+      stdio: "ignore",
+    }).unref();
+
+    setTimeout(() => {
+      app.quit();
+    }, 300);
+
+    return { ok: true, filePath: result.filePath };
   });
 
   ipcMain.handle("mail:upload-files", async (_event, payload = {}) => {
@@ -500,6 +602,7 @@ function registerIpcHandlers() {
       ...runtime.settings,
       ...payload,
       smtpPort: Number(payload.smtpPort || runtime.settings.smtpPort || 587),
+      otaManifestUrl: String(payload.otaManifestUrl ?? runtime.settings.otaManifestUrl ?? ""),
       updatedAt: new Date().toISOString(),
     };
     await saveSettings();

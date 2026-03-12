@@ -1,75 +1,102 @@
 <template>
-  <div class="supplier-wrap">
-    <div class="toolbar">
-      <button class="btn accent" type="button" @click="openCreate">新增供应商</button>
-      <button class="btn ghost" type="button" @click="openEdit">编辑供应商</button>
-      <button class="btn ghost" type="button" @click="toggleEnabled">切换启用</button>
+  <div class="view">
+    <div class="page-title">
+      <span class="material-symbols-outlined">badge</span>
+      供应商管理
     </div>
 
-    <table class="supplier-table">
-      <thead>
-        <tr>
-          <th></th>
-          <th>供应商号</th>
-          <th>供应商名称</th>
-          <th>邮箱</th>
-          <th>状态</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-if="items.length === 0">
-          <td colspan="5" class="empty-row">暂无供应商数据</td>
-        </tr>
-        <tr
-          v-for="item in items"
-          :key="item.code"
-          :class="{ selected: selectedCode === item.code }"
-          @click="selectedCode = item.code"
-        >
-          <td>
-            <input
-              type="radio"
-              name="supplier-selected"
-              :checked="selectedCode === item.code"
-              @change="selectedCode = item.code"
-            >
-          </td>
-          <td>{{ item.code }}</td>
-          <td>{{ item.name }}</td>
-          <td>{{ item.email }}</td>
-          <td>
-            <span class="status-tag" :class="item.enabled ? 'on' : 'off'">
-              {{ item.enabled ? '启用' : '停用' }}
-            </span>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+    <div class="toolbar">
+      <div class="left-actions">
+        <button class="btn primary" type="button" @click="openCreate">新增供应商</button>
+        <button class="btn primary" type="button" @click="openEdit">编辑供应商</button>
+      </div>
+      <div class="right-actions">
+        <button class="btn cta" type="button" @click="toggleEnabled">切换启用</button>
+      </div>
+    </div>
 
-    <div v-if="banner" class="banner">{{ banner }}</div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>选择</th>
+            <th>供应商号</th>
+            <th>供应商名称</th>
+            <th>邮箱</th>
+            <th>状态</th>
+          </tr>
+        </thead>
+        <tbody id="supplierBody">
+          <tr v-if="items.length === 0">
+            <td colspan="5">暂无供应商数据</td>
+          </tr>
+          <tr
+            v-for="item in items"
+            :key="item.code"
+            :class="{ 'row-selected': selectedCode === item.code }"
+            :data-supplier-code="item.code"
+            @click="selectedCode = item.code"
+          >
+            <td>
+              <input
+                type="radio"
+                name="supplier-selected"
+                :checked="selectedCode === item.code"
+                @change="selectedCode = item.code"
+              >
+            </td>
+            <td>{{ item.code }}</td>
+            <td>{{ item.name }}</td>
+            <td>{{ item.email }}</td>
+            <td>
+              <span class="tag" :class="item.enabled ? 'ok' : 'disabled'">{{ item.enabled ? '启用' : '停用' }}</span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
 
-    <div v-if="isModalOpen" class="modal-mask" @click.self="isModalOpen = false">
+    <div class="summary-bar">
+      <div class="stat">
+        <span><span class="dot green"></span> 启用 {{ enabledCount }}</span>
+        <span><span class="dot gray"></span> 停用 {{ disabledCount }}</span>
+      </div>
+      <span>共 {{ items.length }} 个供应商</span>
+    </div>
+
+    <div v-if="banner" style="margin-top:8px;font-size:12px;color:var(--brand);">{{ banner }}</div>
+
+    <div :class="['modal-overlay', { show: isModalOpen }]" @click.self="isModalOpen = false">
       <div class="modal">
-        <h3>{{ modalMode === 'create' ? '新增供应商' : '编辑供应商' }}</h3>
+        <h3>
+          <span class="material-symbols-outlined">person_add</span>
+          {{ modalMode === 'create' ? '新增供应商' : '编辑供应商' }}
+        </h3>
 
-        <label class="modal-label" for="supplierCode">供应商号</label>
-        <input
-          id="supplierCode"
-          v-model="form.code"
-          class="modal-input"
-          type="text"
-          :disabled="modalMode === 'edit'"
-        >
+        <div class="form-group">
+          <label>供应商号</label>
+          <input
+            id="supplierCode"
+            v-model="form.code"
+            class="form-input"
+            type="text"
+            :disabled="modalMode === 'edit'"
+          >
+        </div>
 
-        <label class="modal-label" for="supplierName">供应商名称</label>
-        <input id="supplierName" v-model="form.name" class="modal-input" type="text">
+        <div class="form-group">
+          <label>供应商名称</label>
+          <input id="supplierName" v-model="form.name" class="form-input" type="text">
+        </div>
 
-        <label class="modal-label" for="supplierEmail">邮箱</label>
-        <input id="supplierEmail" v-model="form.email" class="modal-input" type="email">
+        <div class="form-group">
+          <label>邮箱</label>
+          <input id="supplierEmail" v-model="form.email" class="form-input" type="email">
+        </div>
 
         <div class="modal-actions">
           <button class="btn ghost" type="button" @click="isModalOpen = false">取消</button>
-          <button class="btn accent" type="button" @click="submitModal">保存</button>
+          <button class="btn primary" type="button" @click="submitModal">保存</button>
         </div>
       </div>
     </div>
@@ -88,6 +115,8 @@ const modalMode = ref("create");
 const form = reactive({ code: "", name: "", email: "" });
 
 const selectedItem = computed(() => items.value.find((x) => x.code === selectedCode.value));
+const enabledCount = computed(() => items.value.filter((x) => x.enabled).length);
+const disabledCount = computed(() => items.value.filter((x) => !x.enabled).length);
 let offSupplierUpdated = null;
 
 function resetForm() {
@@ -179,123 +208,3 @@ onBeforeUnmount(() => {
   }
 });
 </script>
-
-<style scoped>
-.supplier-wrap {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.toolbar {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.btn {
-  border: none;
-  border-radius: 10px;
-  padding: 8px 12px;
-  cursor: pointer;
-}
-
-.btn.accent {
-  background: #ddeaf8;
-  color: #1a3e66;
-  font-weight: 600;
-}
-
-.btn.ghost {
-  border: 1px solid #d9e0d8;
-  background: #eef2ee;
-  color: #2c3e36;
-}
-
-.supplier-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 13px;
-}
-
-.supplier-table th,
-.supplier-table td {
-  border-bottom: 1px solid #d9e0d8;
-  text-align: left;
-  padding: 8px;
-}
-
-.empty-row {
-  color: #5c6670;
-}
-
-.selected {
-  background: #f5f8f4;
-}
-
-.status-tag {
-  display: inline-block;
-  border-radius: 999px;
-  padding: 2px 8px;
-  font-size: 11px;
-  font-weight: 600;
-}
-
-.status-tag.on {
-  background: rgba(29, 143, 82, 0.18);
-  color: #1d8f52;
-}
-
-.status-tag.off {
-  background: rgba(191, 59, 59, 0.18);
-  color: #bf3b3b;
-}
-
-.banner {
-  font-size: 12px;
-  color: #0c8f78;
-}
-
-.modal-mask {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.38);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 100;
-}
-
-.modal {
-  background: #fff;
-  border-radius: 12px;
-  width: 420px;
-  max-width: calc(100vw - 24px);
-  padding: 16px;
-}
-
-.modal h3 {
-  margin: 0 0 10px;
-}
-
-.modal-label {
-  font-size: 12px;
-  color: #5c6670;
-}
-
-.modal-input {
-  width: 100%;
-  margin-top: 6px;
-  margin-bottom: 10px;
-  border: 1px solid #d9e0d8;
-  border-radius: 8px;
-  padding: 8px 10px;
-}
-
-.modal-actions {
-  margin-top: 12px;
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-}
-</style>
