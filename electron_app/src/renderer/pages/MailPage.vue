@@ -95,18 +95,17 @@
 </template>
 
 <script setup>
-import { computed, ref } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 
-const MAIL_STORAGE_KEY = "flint.mailRows.v2";
 const MAIL_HIDE_SENT_KEY = "flint.mailHideSent.v2";
-const MAIL_PERSIST_DIR = "data/mail_uploads/";
 
 const isDragOver = ref(false);
 const isSendModalOpen = ref(false);
 const subjectPrefix = ref("");
 const banner = ref("");
+const activeJobId = ref("");
 
-const rows = ref(loadRows());
+const rows = ref([]);
 const hideSent = ref(localStorage.getItem(MAIL_HIDE_SENT_KEY) === "1");
 
 const visibleRows = computed(() => rows.value.filter((x) => !(hideSent.value && x.status === "SUCCESS")));
@@ -123,29 +122,31 @@ const subjectPreview = computed(() => {
   return `${(subjectPrefix.value || "").trim()}零件供货方式确认_${supplierCode}`;
 });
 
-function loadRows() {
-  const raw = localStorage.getItem(MAIL_STORAGE_KEY);
-  if (!raw) {
-    return [];
-  }
-  try {
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
+let offProgress = null;
+let offCompleted = null;
+
+function normalizeTask(task, selectedMap) {
+  return {
+    id: task.id,
+    selected: !!selectedMap.get(task.id),
+    status: task.status || "PENDING",
+    fileName: task.fileName || "",
+    supplierCode: task.supplierCode || "",
+    storedPath: task.storedPath || "",
+    subject: task.subject || "",
+    failReason: task.failReason || "",
+  };
 }
 
-function saveRows() {
-  localStorage.setItem(MAIL_STORAGE_KEY, JSON.stringify(rows.value));
-}
-
-function extractSupplierCode(fileName) {
-  const match = fileName.match(/_(\d{5})_/);
-  if (match) {
-    return match[1];
+async function refreshTasks() {
+  if (!window.flintApi?.mailGetTasks) {
+    banner.value = "Mail IPC 未就绪";
+    return;
   }
-  return String(Math.floor(10000 + Math.random() * 90000));
+  const selectedMap = new Map(rows.value.map((x) => [x.id, x.selected]));
+  const response = await window.flintApi.mailGetTasks(hideSent.value);
+  const tasks = Array.isArray(response?.tasks) ? response.tasks : [];
+  rows.value = tasks.map((task) => normalizeTask(task, selectedMap));
 }
 
 function statusClass(status) {
@@ -158,35 +159,32 @@ function statusClass(status) {
   return "pending";
 }
 
-function makeSubject(prefix, supplierCode) {
-  return `${(prefix || "").trim()}零件供货方式确认_${supplierCode}`;
-}
-
-function onDrop(event) {
+async function onDrop(event) {
   isDragOver.value = false;
   const files = Array.from(event.dataTransfer?.files || []);
   if (!files.length) {
     return;
   }
-  const now = Date.now();
-  const nextRows = files.map((file, idx) => ({
-    id: `${now}_${idx}_${Math.random().toString(36).slice(2, 7)}`,
-    selected: false,
-    status: "PENDING",
-    fileName: file.name,
-    supplierCode: extractSupplierCode(file.name),
-    storedPath: `${MAIL_PERSIST_DIR}${now}_${file.name}`,
-    subject: "",
-    failReason: "",
+  if (!window.flintApi?.mailUploadFiles) {
+    banner.value = "Mail IPC 未就绪";
+    return;
+  }
+
+  const descriptors = files.map((file) => ({
+    name: file.name,
+    path: file.path || "",
+    size: file.size,
+    lastModified: file.lastModified,
   }));
-  rows.value = [...rows.value, ...nextRows];
-  saveRows();
-  banner.value = `已上传 ${files.length} 个文件，持久化目录：${MAIL_PERSIST_DIR}`;
+
+  const result = await window.flintApi.mailUploadFiles(descriptors);
+  const count = Array.isArray(result?.tasks) ? result.tasks.length : files.length;
+  await refreshTasks();
+  banner.value = `已上传 ${count} 个文件并加入发送队列`;
 }
 
 function toggleRow(id) {
   rows.value = rows.value.map((x) => (x.id === id ? { ...x, selected: !x.selected } : x));
-  saveRows();
 }
 
 function toggleSelectAll(event) {
@@ -197,23 +195,31 @@ function toggleSelectAll(event) {
     }
     return { ...x, selected: checked };
   });
-  saveRows();
 }
 
-function toggleHideSent() {
+async function toggleHideSent() {
   hideSent.value = !hideSent.value;
   localStorage.setItem(MAIL_HIDE_SENT_KEY, hideSent.value ? "1" : "0");
+  await refreshTasks();
 }
 
-function deleteSelectedRows() {
+async function deleteSelectedRows() {
   const selected = rows.value.filter((x) => x.selected);
   if (selected.length === 0) {
     banner.value = "请先选择需要删除的行项目";
     return;
   }
-  rows.value = rows.value.filter((x) => !x.selected);
-  saveRows();
-  banner.value = `已删除 ${selected.length} 条记录，并同步删除持久化文件`;
+  if (!window.flintApi?.mailDeleteTasks) {
+    banner.value = "Mail IPC 未就绪";
+    return;
+  }
+
+  const result = await window.flintApi.mailDeleteTasks(
+    selected.map((x) => x.id),
+    true,
+  );
+  await refreshTasks();
+  banner.value = `已删除 ${result?.deletedCount || selected.length} 条记录，并同步删除持久化文件`;
 }
 
 function openSendModal() {
@@ -224,41 +230,58 @@ function openSendModal() {
   isSendModalOpen.value = true;
 }
 
-function confirmSend() {
+async function confirmSend() {
   const queue = rows.value.filter((x) => x.selected);
   if (queue.length === 0) {
     isSendModalOpen.value = false;
     banner.value = "未选择待发送文件";
     return;
   }
+  if (!window.flintApi?.mailStartSend) {
+    banner.value = "Mail IPC 未就绪";
+    return;
+  }
+
   isSendModalOpen.value = false;
+  const result = await window.flintApi.mailStartSend(
+    queue.map((x) => x.id),
+    subjectPrefix.value,
+  );
+  activeJobId.value = String(result?.jobId || "");
   banner.value = `开始队列发送 ${queue.length} 条任务...`;
-  let index = 0;
-  const timer = setInterval(() => {
-    if (index >= queue.length) {
-      clearInterval(timer);
-      saveRows();
-      banner.value = "队列发送完成";
-      return;
-    }
-    const current = queue[index];
-    const success = Math.random() > 0.2;
-    rows.value = rows.value.map((x) => {
-      if (x.id !== current.id) {
-        return x;
-      }
-      return {
-        ...x,
-        status: success ? "SUCCESS" : "FAILED",
-        selected: false,
-        subject: makeSubject(subjectPrefix.value, x.supplierCode),
-        failReason: success ? "" : "SMTP 421 限流",
-      };
-    });
-    saveRows();
-    index += 1;
-  }, 700);
 }
+
+onMounted(async () => {
+  await refreshTasks();
+  if (window.flintApi?.onMailQueueProgress) {
+    offProgress = window.flintApi.onMailQueueProgress(async (payload) => {
+      if (activeJobId.value && payload?.jobId !== activeJobId.value) {
+        return;
+      }
+      banner.value = `发送中 ${payload?.sent || 0} / ${payload?.total || 0}`;
+      await refreshTasks();
+    });
+  }
+  if (window.flintApi?.onMailQueueCompleted) {
+    offCompleted = window.flintApi.onMailQueueCompleted(async (payload) => {
+      if (activeJobId.value && payload?.jobId !== activeJobId.value) {
+        return;
+      }
+      banner.value = `队列发送完成：成功 ${payload?.success || 0}，失败 ${payload?.failed || 0}`;
+      activeJobId.value = "";
+      await refreshTasks();
+    });
+  }
+});
+
+onBeforeUnmount(() => {
+  if (typeof offProgress === "function") {
+    offProgress();
+  }
+  if (typeof offCompleted === "function") {
+    offCompleted();
+  }
+});
 </script>
 
 <style scoped>

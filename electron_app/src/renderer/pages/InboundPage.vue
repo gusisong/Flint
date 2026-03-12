@@ -1,7 +1,7 @@
 <template>
   <div class="inbound-wrap">
     <div class="toolbar">
-      <button class="btn accent" type="button" @click="simulateReview">开始审查</button>
+      <button class="btn accent" type="button" @click="startReview">开始审查</button>
       <button class="btn ghost" type="button" @click="exportLog">导出日志</button>
     </div>
 
@@ -33,6 +33,7 @@
     </div>
 
     <div class="summary">{{ summaryText }}</div>
+    <div v-if="banner" class="banner">{{ banner }}</div>
 
     <table class="result-table">
       <thead>
@@ -66,91 +67,114 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from "vue";
-
-const INBOUND_UPLOAD_KEY = "flint.inboundUploads.v1";
+import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 
 const isDragOver = ref(false);
 const uploadedFiles = ref([]);
 const reviewRows = ref([]);
+const banner = ref("");
 const summaryText = ref("共 0 条问题 · 0 个文件");
 
 const displayedFiles = computed(() => uploadedFiles.value.slice(0, 10));
+let offReviewCompleted = null;
 
-function persistQueue() {
-  localStorage.setItem(INBOUND_UPLOAD_KEY, JSON.stringify(uploadedFiles.value));
+function updateSummaryWithRows(rows, fileCount) {
+  const nextRows = Array.isArray(rows) ? rows : [];
+  const nextFileCount = Number(fileCount || uploadedFiles.value.length || 0);
+  reviewRows.value = nextRows;
+  summaryText.value = `共 ${nextRows.length} 条问题 · ${nextFileCount} 个文件`;
 }
 
-function restoreQueue() {
-  const raw = localStorage.getItem(INBOUND_UPLOAD_KEY);
-  if (!raw) {
-    uploadedFiles.value = [];
+async function refreshUploads() {
+  if (!window.flintApi?.inboundGetUploads) {
+    banner.value = "Inbound IPC 未就绪";
     return;
   }
-  try {
-    const parsed = JSON.parse(raw);
-    uploadedFiles.value = Array.isArray(parsed) ? parsed : [];
-  } catch {
-    uploadedFiles.value = [];
-  }
+  const result = await window.flintApi.inboundGetUploads();
+  uploadedFiles.value = Array.isArray(result?.files) ? result.files : [];
 }
 
-function onDrop(event) {
+async function refreshLastReview() {
+  if (!window.flintApi?.inboundGetLastReview) {
+    return;
+  }
+  const result = await window.flintApi.inboundGetLastReview();
+  const review = result?.review;
+  if (!review) {
+    return;
+  }
+  updateSummaryWithRows(review.rows, review.summary?.fileCount);
+}
+
+async function onDrop(event) {
   isDragOver.value = false;
   const files = Array.from(event.dataTransfer?.files || []);
   if (!files.length) {
     return;
   }
-  const now = Date.now();
-  const incoming = files.map((file, idx) => ({
-    id: `inbound_${now}_${idx}`,
-    fileName: file.name,
+  if (!window.flintApi?.inboundUploadFiles) {
+    banner.value = "Inbound IPC 未就绪";
+    return;
+  }
+
+  const descriptors = files.map((file) => ({
+    name: file.name,
+    path: file.path || "",
+    size: file.size,
+    lastModified: file.lastModified,
   }));
-  uploadedFiles.value = [...uploadedFiles.value, ...incoming];
-  persistQueue();
+  await window.flintApi.inboundUploadFiles(descriptors);
+  await refreshUploads();
+  banner.value = `已上传 ${files.length} 个文件`;
 }
 
-function removeFile(fileId) {
-  uploadedFiles.value = uploadedFiles.value.filter((entry) => entry.id !== fileId);
-  persistQueue();
+async function removeFile(fileId) {
+  if (!window.flintApi?.inboundRemoveUpload) {
+    banner.value = "Inbound IPC 未就绪";
+    return;
+  }
+  await window.flintApi.inboundRemoveUpload(fileId);
+  await refreshUploads();
 }
 
-function exportLog() {
-  summaryText.value = "日志已导出到 data/logs/";
+async function exportLog() {
+  if (!window.flintApi?.inboundExportCsv) {
+    banner.value = "Inbound IPC 未就绪";
+    return;
+  }
+  const result = await window.flintApi.inboundExportCsv(reviewRows.value);
+  banner.value = `日志已导出到 ${result?.filePath || "data/logs/"}`;
 }
 
-function simulateReview() {
+async function startReview() {
   if (uploadedFiles.value.length === 0) {
     summaryText.value = "请先拖拽 Inbound 文件到上传区域";
     return;
   }
-  reviewRows.value = [
-    {
-      file: "Inbound_W12.xlsx",
-      line: 54,
-      plant: "WUH",
-      supplierCode: "10243",
-      supplierName: "ACME Corp",
-      partNo: "P-A1021",
-      partName: "前桥总成",
-      tags: ["供应商编码不一致", "Inbound方式错误"],
-    },
-    {
-      file: "Inbound_W13.xlsx",
-      line: 12,
-      plant: "NAN",
-      supplierCode: "11502",
-      supplierName: "东方精密",
-      partNo: "P-C4412",
-      partName: "稳定杆",
-      tags: ["缺少必填字段"],
-    },
-  ];
-  summaryText.value = `共 ${reviewRows.value.length} 条问题 · ${uploadedFiles.value.length} 个文件`;
+  if (!window.flintApi?.inboundStartReview) {
+    banner.value = "Inbound IPC 未就绪";
+    return;
+  }
+  const fileIds = uploadedFiles.value.map((x) => x.id);
+  await window.flintApi.inboundStartReview(fileIds);
+  banner.value = "审查任务已启动";
 }
 
-onMounted(() => {
-  restoreQueue();
+onMounted(async () => {
+  await refreshUploads();
+  await refreshLastReview();
+  if (window.flintApi?.onInboundReviewCompleted) {
+    offReviewCompleted = window.flintApi.onInboundReviewCompleted((payload) => {
+      updateSummaryWithRows(payload?.rows, payload?.summary?.fileCount);
+      banner.value = "审查完成，结果已回填";
+    });
+  }
+});
+
+onBeforeUnmount(() => {
+  if (typeof offReviewCompleted === "function") {
+    offReviewCompleted();
+  }
 });
 </script>
 
@@ -242,6 +266,11 @@ onMounted(() => {
 .summary {
   font-size: 12px;
   color: #5c6670;
+}
+
+.banner {
+  font-size: 12px;
+  color: #0c8f78;
 }
 
 .result-table {

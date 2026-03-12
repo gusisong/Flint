@@ -287,9 +287,13 @@
 
 * Inbound 模块新增单次完成事件：`inbound:review-completed`，用于一次性回填审查结果。
 * Mail 模块新增上传持久化与队列接口：`mail:upload-files`、`mail:get-tasks`、`mail:delete-tasks`、`mail:start-send`。
+* Mail 模块从“渲染进程本地状态”升级为“主进程 IPC 队列驱动”，发送进度通过 `mail:queue-progress` / `mail:queue-completed` 事件回推。
 * Mail 模块新增发送前标题规则参数：`subjectPrefix`（允许空字符串），主进程按供应商编码生成最终标题。
 * Mail 模块新增过滤参数：`hideSent=true` 时默认隐藏 `SUCCESS` 项。
+* Inbound 模块补齐上传与结果链路：`inbound:upload-files`、`inbound:get-uploads`、`inbound:remove-upload`、`inbound:start-review`、`inbound:get-last-review`、`inbound:export-csv`。
 * Supplier 模块新增选择态相关接口：`supplier:update-status(code, enabled)`、`supplier:get-list()`，前端基于单选行提交状态切换。
+* Supplier 模块补齐维护接口：`supplier:create`、`supplier:update`，并通过 `supplier:list-updated` 实现列表自动同步。
+* Settings 模块新增配置读写接口：`settings:get`、`settings:save`，主进程持久化保存 SMTP 与发件配置。
 * 列表刷新策略调整为“写入后自动回读 + 事件广播”：主进程写库成功后主动推送 `supplier:list-updated`。
 * 移除模块1/模块3对手动刷新按钮的依赖，避免无效重复请求（模块1保留“导出 CSV”按钮）。
 
@@ -372,6 +376,11 @@
 * 编号 52：首批迁移阶段采用“渲染进程本地状态 + IPC 预留”数据链路。
 * 编号 53：第二批迁移优先模块2（运输协议外发），先完成前端可交互闭环。
 * 编号 54：模块2迁移阶段发送结果策略采用“随机成功/失败”，删除策略为“仅删除当前勾选项”。
+* 编号 55：模块2已切换为主进程 IPC 数据链路（上传/查询/发送/删除 + 进度事件），上传文件持久化路径迁移到 Electron `userData/data/mail_uploads/`。
+* 编号 56：模块1已切换为主进程 IPC 数据链路，上传队列与最近审查结果持久化到 Electron `userData/data/`。
+* 编号 57：模块3已完成主进程持久化联通，支持新增/编辑/启停并通过事件驱动自动同步列表。
+* 编号 58：模块4已完成配置中心读写链路，SMTP 与发件配置持久化到本地数据目录。
+* 编号 59：Electron 工程新增 Vitest 自动化测试基线，`npm test` 为交付验收必跑项。
 
 ---
 
@@ -429,3 +438,13 @@
     EN: The second migration wave prioritizes Module 2 (Mail Dispatch), delivering a frontend interactive loop for drag upload, multi-select sending, filtering, and subject-prefix modal.
 26. CN: 模块2迁移阶段发送结果采用随机成功/失败模拟，删除策略固定为仅删除当前勾选行。
     EN: During Module 2 migration, send results are simulated with random success/failure, and deletion is limited to currently selected rows.
+27. CN: 模块2已从渲染进程本地状态升级为主进程 IPC 队列驱动，新增 `mail:queue-progress` 与 `mail:queue-completed` 事件回推。
+    EN: Module 2 has been upgraded from renderer-local state to a main-process IPC queue flow, with `mail:queue-progress` and `mail:queue-completed` event callbacks.
+28. CN: 模块1已完成上传/移除/审查/导出全链路 IPC 落地，审查完成通过 `inbound:review-completed` 回推前端。
+    EN: Module 1 now has end-to-end IPC for upload/remove/review/export, and review completion is pushed to the renderer via `inbound:review-completed`.
+29. CN: 模块3已完成 `supplier:create` / `supplier:update` / `supplier:update-status`，列表通过 `supplier:list-updated` 自动刷新。
+    EN: Module 3 now supports `supplier:create` / `supplier:update` / `supplier:update-status`, with list auto-refresh via `supplier:list-updated`.
+30. CN: 模块4已完成 `settings:get` / `settings:save`，系统设置页可直接读写 SMTP 与发件配置。
+    EN: Module 4 now supports `settings:get` / `settings:save`, enabling direct SMTP and sender-configuration read/write from the settings page.
+31. CN: Electron 工程建立 Vitest 自动化测试基线并纳入 `npm test`，作为本轮交付验收门槛。
+    EN: The Electron project now includes a Vitest baseline integrated into `npm test`, used as a release acceptance gate in this delivery.
