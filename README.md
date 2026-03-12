@@ -1,75 +1,55 @@
 # Flint
 
-Flint is currently in a gradual migration phase from Python + Flet to Electron + Vue.
+Flint is now delivered as an Electron + Vue desktop application.
 
-## Demo references
+## Current status
 
-- Legacy single-file UI baseline: `ui/frontend_demo.html`
-- Modular UI demo baseline: `ui/demo_modular/index.html`
+- Runtime stack: Electron + Vue 3 + Vite.
+- Old Python runtime has been removed from this repository.
+- Core modules are available in Electron renderer + main-process IPC:
+  - Inbound planning review
+  - Transport agreement outbound (Mail)
+  - Supplier management
+  - System settings
 
-The modular demo is the preferred reference for future formal development architecture.
+## Project structure
 
-## Migration status
+- Main app: `electron_app/`
+- Design baseline demo (kept for UI reference):
+  - `ui/frontend_demo.html`
+  - `ui/demo_modular/`
 
-- Current stable runtime: Python + Flet (legacy implementation).
-- New formal-development skeleton: `electron_app/` (Electron + Vue).
-- Migration strategy: gradual replacement module by module.
+## Local development quick start
 
-## Latest progress (2026-03-12)
-
-- Demo split is completed: `ui/demo_modular/` now contains pages/styles/scripts modular structure.
-- Electron skeleton is created in `electron_app/` with main/preload/renderer page shells.
-- Inbound (module 1) and Mail (module 2) have interactive renderer-side migration prototypes.
-- Mail migration behavior for this wave:
-   - Send simulation uses random success/failure.
-   - Delete action removes selected rows only.
-- Local smoke test result:
-   - `npm install` succeeded in `electron_app/`.
-   - `npm run dev` started Vite + Electron successfully.
-
-## Current modules
-
-- `email_sender`: Transport agreement outbound center.
-- `inbound_planning_review`: Inbound planning review center.
-- `supplier_management`: Supplier CRUD and activation management.
-- `system_settings`: SMTP/rule/signature settings center.
-
-## Quick start
-
-1. Create a Python 3.10+ environment.
-2. Install dependencies:
-   - `pip install -r requirements.txt`
-3. Run app:
-   - `python main.py`
-
-## Electron skeleton quick start
-
-1. Enter `electron_app/`.
-2. Install dependencies:
+1. Install Node.js LTS.
+2. Open terminal and enter `electron_app/`.
+3. Install dependencies:
    - `npm install`
-3. Start development mode:
+4. Start dev mode:
    - `npm run dev`
 
-## Cross-PC handoff quick start
+If PowerShell policy blocks `npm.ps1`, use:
 
-1. Clone repository and checkout `main`.
-2. Install Node.js LTS (recommended via `winget install OpenJS.NodeJS.LTS -e`).
-3. Open project root `Flint/` and then enter `electron_app/`.
-4. Run:
-   - `npm install`
-   - `npm run dev`
-5. Continue migration in priority order:
-   - Mail IPC bridge (`main/preload/renderer`)
-   - Supplier page migration
+- `npm.cmd install`
+- `npm.cmd run dev`
+
+## Validation commands
+
+- Run tests: `npm test`
+- Build renderer: `npm run build:renderer`
 
 ## Runtime data
 
-Flint creates runtime files under `data/`:
+During development/runtime, app data is stored under Electron userData `data/` folder:
 
-- `data/platform_core.db`
-- `data/logs/system.log`
-- `data/secret.key`
+- `mail_tasks.json`
+- `inbound_uploads.json`
+- `inbound_last_review.json`
+- `suppliers.json`
+- `settings.json`
+- `logs/`
 
-## Packaging
+## Notes
 
-Use Flet/PyInstaller for executable packaging (to be finalized in later iteration).
+- Repository may be ahead of remote when network is unstable; this does not affect local development.
+- Use `ui/` demos as visual/interaction references only, not runtime entry points.

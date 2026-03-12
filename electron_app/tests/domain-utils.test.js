@@ -1,5 +1,4 @@
 import { describe, expect, it } from "vitest";
-
 import utils from "../src/main/services/domain-utils";
 
 const { sanitizeFileName, extractSupplierCode, makeSubject, toCsvCell } = utils;

@@ -371,7 +371,7 @@
 * 编号 47：模块2“隐藏已发送 / 显示已发送”按钮图标实现定版为 Unicode：`🚫`（隐藏已发送）与 `👁`（显示已发送）。
 * 编号 48：模块1上传文件清单在 Demo 中增加本地持久化队列（模拟后端同步），新增/删除文件需实时更新队列状态。
 * 编号 49：正式开发已启动，工程骨架目录固定为 `electron_app/`。
-* 编号 50：旧栈（Python + Flet）采用“逐步替换”策略，不一次性下线。
+* 编号 50：旧栈（Python + Flet）采用“逐步替换”策略，不一次性下线。（已被编号 60 覆盖）
 * 编号 51：首批迁移模块优先选择模块1（Inbound 规划审查）。
 * 编号 52：首批迁移阶段采用“渲染进程本地状态 + IPC 预留”数据链路。
 * 编号 53：第二批迁移优先模块2（运输协议外发），先完成前端可交互闭环。
@@ -381,6 +381,7 @@
 * 编号 57：模块3已完成主进程持久化联通，支持新增/编辑/启停并通过事件驱动自动同步列表。
 * 编号 58：模块4已完成配置中心读写链路，SMTP 与发件配置持久化到本地数据目录。
 * 编号 59：Electron 工程新增 Vitest 自动化测试基线，`npm test` 为交付验收必跑项。
+* 编号 60：旧栈（Python + Flet）已正式下线，仓库中所有 Python 运行时代码与依赖文件已清理，运行栈统一为 Electron + Vue。
 
 ---
 
@@ -428,8 +429,8 @@
     EN: Module 1 introduces a locally persisted upload queue in the demo to simulate backend synchronization; file add/remove actions must be written back immediately.
 21. CN: 正式开发阶段已启动，Electron + Vue 工程骨架目录固定为 `electron_app/`。
     EN: Formal development has started, and the Electron + Vue project skeleton is fixed under `electron_app/`.
-22. CN: 旧栈（Python + Flet）按“逐步替换”策略迁移，避免一次性切换风险。
-    EN: The legacy stack (Python + Flet) will be migrated via a gradual replacement strategy to avoid one-shot cutover risks.
+22. CN: 旧栈（Python + Flet）按“逐步替换”策略迁移，避免一次性切换风险。（已被条目 32 覆盖）
+    EN: The legacy stack (Python + Flet) was planned for gradual replacement to avoid one-shot cutover risks. (Superseded by item 32.)
 23. CN: 首批业务迁移优先模块1（Inbound 规划审查），用于验证新架构落地链路。
     EN: The first business migration wave prioritizes Module 1 (Inbound Review) to validate the new architecture delivery path.
 24. CN: 首批迁移阶段数据链路采用“渲染进程本地状态 + IPC 预留”，后续再切换真实主进程服务。
@@ -448,3 +449,5 @@
     EN: Module 4 now supports `settings:get` / `settings:save`, enabling direct SMTP and sender-configuration read/write from the settings page.
 31. CN: Electron 工程建立 Vitest 自动化测试基线并纳入 `npm test`，作为本轮交付验收门槛。
     EN: The Electron project now includes a Vitest baseline integrated into `npm test`, used as a release acceptance gate in this delivery.
+32. CN: 旧栈（Python + Flet）已正式下线并完成仓库清理，后续仅维护 Electron + Vue 单栈代码。
+    EN: The legacy Python + Flet stack has been formally retired and removed from the repository; future development is maintained on the Electron + Vue single stack only.
