@@ -96,7 +96,7 @@ function reviewRows(fileName, rows) {
     const d5 = supplierCode.slice(0, 5);
     const j5 = supplierCodeJ.slice(0, 5);
     if (d5 && j5 && d5 !== j5) {
-      pushTag(tags, "供应商编码不一致");
+      pushTag(tags, "发货点选择错误");
     }
 
     const inboundMethod = toUpperText(row[6]);
@@ -105,19 +105,19 @@ function reviewRows(fileName, rows) {
     const distance = toNumber(row[14]);
 
     if (inboundMethod === "JIS" && distance !== null && distance > 20) {
-      pushTag(tags, "Inbound方式错误");
+      pushTag(tags, "JIS零件距离>20KM");
     }
     if (distance !== null && distance >= 300 && modeText !== "VMI") {
-      pushTag(tags, "运输距离超限");
+      pushTag(tags, ">300KM建议规划VMI");
     }
     if (distance !== null && distance < 300 && modeText === "TS 3PL-VMI") {
-      pushTag(tags, "VMI规则冲突");
+      pushTag(tags, "<300KM不建议规划VMI");
     }
 
     const combo = `${inboundMethod}|${modeText}|${routeText}`;
     if (inboundMethod || modeText || routeText) {
       if (!WHITELIST_COMBOS.has(combo)) {
-        pushTag(tags, "白名单外组合");
+        pushTag(tags, "供货方式组合异常");
       }
     }
 
@@ -162,16 +162,6 @@ async function reviewInboundFiles(files) {
     const filePath = pickReadablePath(file);
     const fileName = toText(file?.fileName) || "unknown.xlsx";
     if (!filePath) {
-      rows.push({
-        file: fileName,
-        line: 0,
-        plant: "",
-        supplierCode: "",
-        supplierName: "",
-        partNo: "",
-        partName: "",
-        tags: ["缺少必填字段"],
-      });
       continue;
     }
 

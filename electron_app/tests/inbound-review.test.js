@@ -13,8 +13,8 @@ describe("inbound-review", () => {
     const result = reviewRows("case.xlsx", rows);
 
     expect(result).toHaveLength(1);
-    expect(result[0].tags).toContain("供应商编码不一致");
-    expect(result[0].tags).toContain("Inbound方式错误");
+    expect(result[0].tags).toContain("发货点选择错误");
+    expect(result[0].tags).toContain("JIS零件距离>20KM");
   });
 
   it("flags whitelist violation and missing required cells", () => {
@@ -27,6 +27,6 @@ describe("inbound-review", () => {
 
     expect(result).toHaveLength(1);
     expect(result[0].tags).toContain("缺少必填字段");
-    expect(result[0].tags).toContain("白名单外组合");
+    expect(result[0].tags).toContain("供货方式组合异常");
   });
 });

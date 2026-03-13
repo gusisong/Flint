@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, Menu } = require("electron");
+const { app, BrowserWindow, ipcMain, Menu, dialog } = require("electron");
 const fs = require("node:fs");
 const fsp = require("node:fs/promises");
 const path = require("path");
@@ -7,9 +7,9 @@ const {
   sanitizeFileName,
   extractSupplierCode,
   makeSubject,
-  toCsvCell,
 } = require("./services/domain-utils");
 const { reviewInboundFiles } = require("./services/inbound-review");
+const { buildInboundCsvContent } = require("./services/inbound-csv");
 const { checkForUpdate, downloadAndVerifyUpdate } = require("./services/ota-service");
 
 const isDev = !!process.env.VITE_DEV_SERVER_URL;
@@ -53,6 +53,7 @@ const DEFAULT_SETTINGS = {
 };
 
 function createWindow() {
+  const iconPath = path.join(__dirname, "../../public/Flint_Icon.png");
   const win = new BrowserWindow({
     width: 1280,
     height: 840,
@@ -61,6 +62,7 @@ function createWindow() {
     frame: false,
     titleBarStyle: "hidden",
     autoHideMenuBar: true,
+    icon: fs.existsSync(iconPath) ? iconPath : undefined,
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
       contextIsolation: true,
@@ -74,6 +76,9 @@ function createWindow() {
   });
   win.on("unmaximize", () => {
     win.webContents.send("window:maximized-changed", { maximized: false });
+  });
+  win.once("ready-to-show", () => {
+    win.maximize();
   });
 
   if (isDev) {
@@ -139,6 +144,11 @@ async function initRuntime() {
   runtime.inboundUploads = await readJsonFile(runtime.inboundUploadStoreFile, []);
   runtime.inboundLastReview = await readJsonFile(runtime.inboundLastReviewStoreFile, null);
   runtime.suppliers = await readJsonFile(runtime.supplierStoreFile, DEFAULT_SUPPLIERS);
+  runtime.suppliers = runtime.suppliers.map((item) => ({
+    ...item,
+    enabled: true,
+  }));
+  await saveSuppliers();
   runtime.settings = await readJsonFile(runtime.settingsStoreFile, DEFAULT_SETTINGS);
   runtime.ready = true;
 }
@@ -400,31 +410,38 @@ function registerIpcHandlers() {
     const files = Array.isArray(payload.files) ? payload.files : [];
     const now = Date.now();
     const created = [];
+    const skipped = [];
 
     for (let idx = 0; idx < files.length; idx += 1) {
       const file = files[idx] || {};
       const fileName = file.name || `unknown_${idx}`;
+      const originalPath = String(file.path || "").trim();
+      if (!originalPath || !fs.existsSync(originalPath)) {
+        skipped.push({ fileName, reason: "source-path-unavailable" });
+        continue;
+      }
       const targetName = `${now}_${idx}_${sanitizeFileName(fileName)}`;
       const storedPath = path.join(runtime.inboundUploadDir, targetName);
-      if (file.path && fs.existsSync(file.path)) {
-        try {
-          await fsp.copyFile(file.path, storedPath);
-        } catch {
-          // best-effort
-        }
+      try {
+        await fsp.copyFile(originalPath, storedPath);
+      } catch {
+        skipped.push({ fileName, reason: "copy-failed" });
+        continue;
       }
       created.push({
         id: `inbound_${now}_${idx}_${Math.random().toString(36).slice(2, 8)}`,
         fileName,
         storedPath,
-        originalPath: file.path || "",
+        originalPath,
         uploadedAt: new Date().toISOString(),
       });
     }
 
-    runtime.inboundUploads = [...runtime.inboundUploads, ...created];
-    await saveInboundUploads();
-    return { files: runtime.inboundUploads };
+    if (created.length > 0) {
+      runtime.inboundUploads = [...runtime.inboundUploads, ...created];
+      await saveInboundUploads();
+    }
+    return { files: runtime.inboundUploads, importedCount: created.length, skipped };
   });
 
   ipcMain.handle("inbound:get-uploads", async () => {
@@ -488,28 +505,23 @@ function registerIpcHandlers() {
       ? runtime.inboundLastReview.rows
       : [];
 
-    const header = ["文件", "行号", "工厂", "供应商号", "供应商名称", "零件号", "零件名称", "问题标签"];
-    const lines = [header.map(toCsvCell).join(",")];
-    for (const row of rows) {
-      lines.push(
-        [
-          row.file,
-          row.line,
-          row.plant,
-          row.supplierCode,
-          row.supplierName,
-          row.partNo,
-          row.partName,
-          Array.isArray(row.tags) ? row.tags.join("|") : "",
-        ]
-          .map(toCsvCell)
-          .join(","),
-      );
+    const defaultPath = path.join(runtime.logsDir, `inbound_review_${Date.now()}.csv`);
+    const win = BrowserWindow.fromWebContents(_event.sender);
+    const selection = await dialog.showSaveDialog(win || undefined, {
+      title: "导出 Inbound 审查日志",
+      defaultPath,
+      buttonLabel: "导出",
+      filters: [
+        { name: "CSV 文件", extensions: ["csv"] },
+      ],
+    });
+
+    if (selection.canceled || !selection.filePath) {
+      return { canceled: true };
     }
 
-    const filePath = path.join(runtime.logsDir, `inbound_review_${Date.now()}.csv`);
-    await fsp.writeFile(filePath, `${lines.join("\n")}\n`, "utf-8");
-    return { filePath };
+    await fsp.writeFile(selection.filePath, buildInboundCsvContent(rows), "utf-8");
+    return { canceled: false, filePath: selection.filePath };
   });
 
   ipcMain.handle("supplier:get-list", async () => {
@@ -551,6 +563,19 @@ function registerIpcHandlers() {
     await saveSuppliers();
     broadcast("supplier:list-updated", { items: runtime.suppliers });
     return { ok: true, updated: target };
+  });
+
+  ipcMain.handle("supplier:delete", async (_event, payload = {}) => {
+    await initRuntime();
+    const code = normalizeSupplierCode(payload.code);
+    const before = runtime.suppliers.length;
+    runtime.suppliers = runtime.suppliers.filter((x) => x.code !== code);
+    if (runtime.suppliers.length === before) {
+      throw new Error(`供应商不存在: ${code}`);
+    }
+    await saveSuppliers();
+    broadcast("supplier:list-updated", { items: runtime.suppliers });
+    return { ok: true, code };
   });
 
   ipcMain.handle("supplier:update-status", async (_event, payload = {}) => {

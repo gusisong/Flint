@@ -197,7 +197,7 @@
     }
 
     /* ========== MAIN ========== */
-    .main { padding: 14px 20px 20px; display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
+    .main { padding: 44px 20px 20px; display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
 
     /* ========== PANEL ========== */
     .panel {
@@ -232,11 +232,13 @@
       display: flex;
       align-items: center;
       gap: 8px;
+      -webkit-app-region: drag;
     }
     .page-title .material-symbols-outlined {
       font-size: 20px;
       color: var(--brand);
       font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24;
+      -webkit-app-region: no-drag;
     }
 
     /* ========== TOOLBAR ========== */
@@ -256,11 +258,48 @@
       align-items: center;
     }
 
+    .toolbar,
+    .toolbar * {
+      -webkit-app-region: no-drag;
+    }
+
+    .toolbar-query {
+      width: 112px;
+      padding: 8px 12px;
+      height: 34px;
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      background: var(--ghost-bg);
+      color: var(--ghost-text);
+      font-size: 12px;
+      font-family: inherit;
+      outline: none;
+    }
+    .toolbar-query:focus {
+      border-color: var(--brand);
+      box-shadow: 0 0 0 2px color-mix(in srgb, var(--brand) 25%, transparent);
+    }
+
     .right-actions .btn {
       width: 112px;
       padding: 8px 12px;
       font-size: 12px;
       border-radius: 9px;
+      border: 1px solid var(--line);
+      background: var(--ghost-bg);
+      color: var(--ghost-text);
+      font-weight: 500;
+    }
+
+    .right-actions .btn:hover {
+      background: var(--ghost-hover);
+      border-color: var(--brand);
+      color: var(--brand);
+    }
+
+    .right-actions .btn:active {
+      transform: translateY(0);
+      box-shadow: none;
     }
 
     /* ========== BUTTONS ========== */
@@ -365,12 +404,65 @@
     }
 
     /* ========== TABLE ========== */
-    .table-wrap { flex: 1; overflow: hidden; margin-top: 14px; min-height: 0; }
+    .table-wrap {
+      flex: 1;
+      overflow: auto;
+      margin-top: 14px;
+      min-height: 0;
+      scrollbar-width: thin;
+      scrollbar-color: transparent transparent;
+      overscroll-behavior: contain;
+    }
 
-    table { width: 100%; border-collapse: collapse; font-size: 13px; }
-    th { text-align: left; padding: 10px; border-bottom: 2px solid var(--line); font-weight: 600; color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
-    td { text-align: left; padding: 10px; border-bottom: 1px solid var(--line); }
-    th, td { word-break: break-word; }
+    .table-wrap::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+
+    .table-wrap::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .table-wrap::-webkit-scrollbar-thumb {
+      background: transparent;
+      border-radius: 999px;
+      transition: background 0.15s ease;
+    }
+
+    .table-wrap:hover {
+      scrollbar-color: rgba(120, 132, 145, 0.45) transparent;
+    }
+
+    .table-wrap:hover::-webkit-scrollbar-thumb {
+      background: rgba(120, 132, 145, 0.45);
+    }
+
+    .table-wrap::-webkit-scrollbar-thumb:hover {
+      background: rgba(120, 132, 145, 0.65);
+    }
+
+    table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    th {
+      text-align: left;
+      padding: 10px;
+      border-bottom: 2px solid var(--line);
+      font-weight: 600;
+      color: var(--muted);
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      position: sticky;
+      top: 0;
+      z-index: 3;
+      background: var(--card);
+    }
+    td { text-align: left; padding: 10px; border-bottom: 1px solid var(--line); font-size: 12px; }
+    th, td {
+      word-break: normal;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
 
     th .col-resizer {
       position: absolute;

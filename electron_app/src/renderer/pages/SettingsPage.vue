@@ -11,7 +11,7 @@
       </div>
       <div class="right-actions">
         <button class="btn ghost" type="button" @click="checkUpdateNow">立即检查更新</button>
-        <button class="btn cta" type="button" @click="saveConfig">保存配置</button>
+        <button class="btn ghost" type="button" @click="saveConfig">保存配置</button>
       </div>
     </div>
 

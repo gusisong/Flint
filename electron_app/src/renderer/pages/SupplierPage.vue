@@ -9,9 +9,16 @@
       <div class="left-actions">
         <button class="btn primary" type="button" @click="openCreate">新增供应商</button>
         <button class="btn primary" type="button" @click="openEdit">编辑供应商</button>
+        <button class="btn danger" type="button" @click="deleteSelected">删除供应商</button>
       </div>
       <div class="right-actions">
-        <button class="btn cta" type="button" @click="toggleEnabled">切换启用</button>
+        <input
+          v-model="queryCode"
+          class="toolbar-query"
+          type="text"
+          placeholder="供应商号查询"
+          @input="handleFilterInput"
+        >
       </div>
     </div>
 
@@ -23,15 +30,14 @@
             <th>供应商号</th>
             <th>供应商名称</th>
             <th>邮箱</th>
-            <th>状态</th>
           </tr>
         </thead>
         <tbody id="supplierBody">
-          <tr v-if="items.length === 0">
-            <td colspan="5">暂无供应商数据</td>
+          <tr v-if="filteredItems.length === 0">
+            <td colspan="4">暂无供应商数据</td>
           </tr>
           <tr
-            v-for="item in items"
+            v-for="item in filteredItems"
             :key="item.code"
             :class="{ 'row-selected': selectedCode === item.code }"
             :data-supplier-code="item.code"
@@ -48,20 +54,14 @@
             <td>{{ item.code }}</td>
             <td>{{ item.name }}</td>
             <td>{{ item.email }}</td>
-            <td>
-              <span class="tag" :class="item.enabled ? 'ok' : 'disabled'">{{ item.enabled ? '启用' : '停用' }}</span>
-            </td>
           </tr>
         </tbody>
       </table>
     </div>
 
     <div class="summary-bar">
-      <div class="stat">
-        <span><span class="dot green"></span> 启用 {{ enabledCount }}</span>
-        <span><span class="dot gray"></span> 停用 {{ disabledCount }}</span>
-      </div>
-      <span>共 {{ items.length }} 个供应商</span>
+      <span></span>
+      <span>共 {{ filteredItems.length }} / {{ allItems.length }} 个供应商</span>
     </div>
 
     <div v-if="banner" style="margin-top:8px;font-size:12px;color:var(--brand);">{{ banner }}</div>
@@ -80,6 +80,7 @@
             v-model="form.code"
             class="form-input"
             type="text"
+            required
             :disabled="modalMode === 'edit'"
           >
         </div>
@@ -91,7 +92,7 @@
 
         <div class="form-group">
           <label>邮箱</label>
-          <input id="supplierEmail" v-model="form.email" class="form-input" type="email">
+          <input id="supplierEmail" v-model="form.email" class="form-input" type="email" required>
         </div>
 
         <div class="modal-actions">
@@ -106,17 +107,24 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, reactive, ref } from "vue";
 
-const items = ref([]);
+const allItems = ref([]);
 const selectedCode = ref("");
+const queryCode = ref("");
 const banner = ref("");
 
 const isModalOpen = ref(false);
 const modalMode = ref("create");
 const form = reactive({ code: "", name: "", email: "" });
 
-const selectedItem = computed(() => items.value.find((x) => x.code === selectedCode.value));
-const enabledCount = computed(() => items.value.filter((x) => x.enabled).length);
-const disabledCount = computed(() => items.value.filter((x) => !x.enabled).length);
+const filteredItems = computed(() => {
+  const code = String(queryCode.value || "").trim();
+  if (!code) {
+    return allItems.value;
+  }
+  return allItems.value.filter((x) => String(x.code || "").includes(code));
+});
+
+const selectedItem = computed(() => allItems.value.find((x) => x.code === selectedCode.value));
 let offSupplierUpdated = null;
 
 function resetForm() {
@@ -131,12 +139,19 @@ async function refreshList() {
     return;
   }
   const result = await window.flintApi.supplierGetList();
-  items.value = Array.isArray(result?.items) ? result.items : [];
-  if (!selectedCode.value && items.value.length > 0) {
-    selectedCode.value = items.value[0].code;
+  allItems.value = Array.isArray(result?.items) ? result.items : [];
+  if (!selectedCode.value && allItems.value.length > 0) {
+    selectedCode.value = allItems.value[0].code;
   }
-  if (selectedCode.value && !items.value.some((x) => x.code === selectedCode.value)) {
-    selectedCode.value = items.value[0]?.code || "";
+  if (selectedCode.value && !allItems.value.some((x) => x.code === selectedCode.value)) {
+    selectedCode.value = allItems.value[0]?.code || "";
+  }
+}
+
+function handleFilterInput() {
+  const visibleCodes = new Set(filteredItems.value.map((x) => x.code));
+  if (selectedCode.value && !visibleCodes.has(selectedCode.value)) {
+    selectedCode.value = filteredItems.value[0]?.code || "";
   }
 }
 
@@ -159,6 +174,14 @@ function openEdit() {
 }
 
 async function submitModal() {
+  if (!String(form.code || "").trim()) {
+    banner.value = "供应商号为必填项";
+    return;
+  }
+  if (!String(form.email || "").trim()) {
+    banner.value = "邮箱为必填项";
+    return;
+  }
   try {
     if (modalMode.value === "create") {
       await window.flintApi.supplierCreate({ code: form.code, name: form.name, email: form.email });
@@ -175,18 +198,23 @@ async function submitModal() {
   }
 }
 
-async function toggleEnabled() {
+async function deleteSelected() {
   if (!selectedItem.value) {
     banner.value = "请先选择一条供应商记录";
     return;
   }
-  const nextEnabled = !selectedItem.value.enabled;
   try {
-    await window.flintApi.supplierUpdateStatus(selectedItem.value.code, nextEnabled);
-    banner.value = `${selectedItem.value.code} 已${nextEnabled ? "启用" : "停用"}`;
+    if (!window.flintApi?.supplierDelete) {
+      banner.value = "Supplier IPC 未就绪";
+      return;
+    }
+    const code = selectedItem.value.code;
+    await window.flintApi.supplierDelete(code);
+    banner.value = `已删除供应商 ${code}`;
     await refreshList();
+    handleFilterInput();
   } catch (error) {
-    banner.value = `更新失败：${error?.message || "未知错误"}`;
+    banner.value = `删除失败：${error?.message || "未知错误"}`;
   }
 }
 
@@ -194,10 +222,11 @@ onMounted(async () => {
   await refreshList();
   if (window.flintApi?.onSupplierListUpdated) {
     offSupplierUpdated = window.flintApi.onSupplierListUpdated(async (payload) => {
-      items.value = Array.isArray(payload?.items) ? payload.items : [];
-      if (!selectedCode.value && items.value.length > 0) {
-        selectedCode.value = items.value[0].code;
+      allItems.value = Array.isArray(payload?.items) ? payload.items : [];
+      if (!selectedCode.value && allItems.value.length > 0) {
+        selectedCode.value = allItems.value[0].code;
       }
+      handleFilterInput();
     });
   }
 });

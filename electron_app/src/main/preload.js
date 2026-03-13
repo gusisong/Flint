@@ -1,4 +1,4 @@
-const { contextBridge, ipcRenderer } = require("electron");
+const { contextBridge, ipcRenderer, webUtils } = require("electron");
 
 contextBridge.exposeInMainWorld("flintApi", {
   minimizeWindow: () => ipcRenderer.invoke("window:minimize"),
@@ -12,6 +12,16 @@ contextBridge.exposeInMainWorld("flintApi", {
   },
 
   getAppMeta: () => ipcRenderer.invoke("platform:get-app-meta"),
+  getPathForFile: (file) => {
+    try {
+      if (webUtils?.getPathForFile && file) {
+        return webUtils.getPathForFile(file) || "";
+      }
+    } catch {
+      // ignored: renderer will handle missing paths gracefully
+    }
+    return "";
+  },
   checkForUpdate: (manifestUrl) => ipcRenderer.invoke("update:check", { manifestUrl }),
   downloadAndInstallUpdate: (payload) => ipcRenderer.invoke("update:download-install", payload),
 
@@ -47,6 +57,7 @@ contextBridge.exposeInMainWorld("flintApi", {
   supplierGetList: () => ipcRenderer.invoke("supplier:get-list"),
   supplierCreate: (payload) => ipcRenderer.invoke("supplier:create", payload),
   supplierUpdate: (payload) => ipcRenderer.invoke("supplier:update", payload),
+  supplierDelete: (code) => ipcRenderer.invoke("supplier:delete", { code }),
   supplierUpdateStatus: (code, enabled) => ipcRenderer.invoke("supplier:update-status", { code, enabled }),
   onSupplierListUpdated: (handler) => {
     const listener = (_event, payload) => handler(payload);

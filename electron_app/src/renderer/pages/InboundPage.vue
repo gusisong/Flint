@@ -6,8 +6,12 @@
     </div>
 
     <div class="toolbar">
-      <button class="btn accent" type="button" @click="startReview">开始审查</button>
-      <button class="btn ghost" type="button" @click="exportLog">导出日志</button>
+      <div class="left-actions">
+        <button class="btn accent" type="button" @click="startReview">开始审查</button>
+      </div>
+      <div class="right-actions">
+        <button class="btn ghost" type="button" @click="exportLog">导出日志</button>
+      </div>
     </div>
 
     <div
@@ -84,11 +88,7 @@
     </div>
 
     <div class="summary-bar">
-      <div class="stat">
-        <span><span class="dot red"></span> 编码相关 {{ codeIssueCount }}</span>
-        <span><span class="dot orange"></span> 距离相关 {{ distanceIssueCount }}</span>
-        <span><span class="dot gray"></span> 规则相关 {{ ruleIssueCount }}</span>
-      </div>
+      <span></span>
       <span>{{ summaryText }}</span>
     </div>
     <div v-if="banner" style="margin-top:8px;font-size:12px;color:var(--brand);">{{ banner }}</div>
@@ -105,28 +105,26 @@ const banner = ref("");
 const summaryText = ref("共 0 条问题 · 0 个文件");
 
 const displayedFiles = computed(() => uploadedFiles.value.slice(0, 10));
-const codeIssueCount = computed(() => reviewRows.value.filter((row) => row.tags?.includes("供应商编码不一致")).length);
-const distanceIssueCount = computed(() => reviewRows.value.filter((row) => row.tags?.includes("运输距离超限")).length);
-const ruleIssueCount = computed(
-  () => reviewRows.value.length - codeIssueCount.value - distanceIssueCount.value,
-);
 let offReviewCompleted = null;
 
 function issueTagClass(tag) {
-  if (tag === "供应商编码不一致") {
+  if (tag === "供应商编码不一致" || tag === "发货点选择错误") {
     return "code";
   }
-  if (tag === "Inbound方式错误") {
+  if (tag === "Inbound方式错误" || tag === "JIS零件距离>20KM") {
     return "method";
   }
   if (tag === "缺少必填字段") {
     return "required";
   }
-  if (tag === "运输距离超限") {
+  if (tag === "运输距离超限" || tag === ">300KM建议规划VMI") {
     return "distance";
   }
-  if (tag === "VMI规则冲突") {
+  if (tag === "VMI规则冲突" || tag === "<300KM不建议规划VMI") {
     return "vmi";
+  }
+  if (tag === "白名单外组合" || tag === "供货方式组合异常") {
+    return "whitelist";
   }
   return "whitelist";
 }
@@ -170,15 +168,24 @@ async function onDrop(event) {
     return;
   }
 
-  const descriptors = files.map((file) => ({
-    name: file.name,
-    path: file.path || "",
-    size: file.size,
-    lastModified: file.lastModified,
-  }));
-  await window.flintApi.inboundUploadFiles(descriptors);
+  const descriptors = files.map((file) => {
+    const resolvedPath = file.path || window.flintApi?.getPathForFile?.(file) || "";
+    return {
+      name: file.name,
+      path: resolvedPath,
+      size: file.size,
+      lastModified: file.lastModified,
+    };
+  });
+  const result = await window.flintApi.inboundUploadFiles(descriptors);
   await refreshUploads();
-  banner.value = `已上传 ${files.length} 个文件`;
+  const importedCount = Number(result?.importedCount || 0);
+  const skippedCount = Array.isArray(result?.skipped) ? result.skipped.length : 0;
+  if (skippedCount > 0) {
+    banner.value = `已上传 ${importedCount} 个文件，${skippedCount} 个文件路径不可访问`;
+    return;
+  }
+  banner.value = `已上传 ${importedCount} 个文件`;
 }
 
 async function removeFile(fileId) {
@@ -195,8 +202,26 @@ async function exportLog() {
     banner.value = "Inbound IPC 未就绪";
     return;
   }
-  const result = await window.flintApi.inboundExportCsv(reviewRows.value);
-  banner.value = `日志已导出到 ${result?.filePath || "data/logs/"}`;
+  try {
+    const plainRows = reviewRows.value.map((row) => ({
+      file: row.file,
+      line: row.line,
+      plant: row.plant,
+      supplierCode: row.supplierCode,
+      supplierName: row.supplierName,
+      partNo: row.partNo,
+      partName: row.partName,
+      tags: Array.isArray(row.tags) ? [...row.tags] : [],
+    }));
+    const result = await window.flintApi.inboundExportCsv(plainRows);
+    if (result?.canceled) {
+      banner.value = "已取消导出";
+      return;
+    }
+    banner.value = `日志已导出到 ${result?.filePath || "已选择路径"}`;
+  } catch (error) {
+    banner.value = `导出失败：${error?.message || "未知错误"}`;
+  }
 }
 
 async function startReview() {
@@ -210,18 +235,19 @@ async function startReview() {
   }
   const fileIds = uploadedFiles.value.map((x) => x.id);
   await window.flintApi.inboundStartReview(fileIds);
-  banner.value = "审查任务已启动";
+  await refreshLastReview();
+  banner.value = "审查完成，结果已回填";
 }
 
 onMounted(async () => {
-  await refreshUploads();
-  await refreshLastReview();
   if (window.flintApi?.onInboundReviewCompleted) {
     offReviewCompleted = window.flintApi.onInboundReviewCompleted((payload) => {
       updateSummaryWithRows(payload?.rows, payload?.summary?.fileCount);
       banner.value = "审查完成，结果已回填";
     });
   }
+  await refreshUploads();
+  await refreshLastReview();
 });
 
 onBeforeUnmount(() => {
