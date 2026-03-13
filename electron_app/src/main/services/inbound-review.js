@@ -2,6 +2,9 @@ const xlsx = require("xlsx");
 
 const REQUIRED_CELL_INDEXES = [0, 2, 3, 6, 7, 8, 9, 11, 12];
 
+const COVERAGE_ZERO_REQUIRED_MODES = new Set(["MR 3PL", "TS 3PL-VMI", "TS 3PL-CC"]);
+const COVERAGE_POSITIVE_FORBIDDEN_MODES = new Set(["DR SUP", "TS SUP-VMI", "TS SUP-CC"]);
+
 const WHITELIST_COMBOS = new Set(
   [
     "LAH|DR 3PL|ENG",
@@ -79,7 +82,11 @@ function pickReadablePath(file) {
   });
 }
 
-function reviewRows(fileName, rows) {
+async function reviewRows(fileName, rows, options = {}) {
+  const resolveCoverageBySite =
+    typeof options.resolveCoverageBySite === "function"
+      ? options.resolveCoverageBySite
+      : async () => null;
   const issues = [];
 
   for (let idx = 1; idx < rows.length; idx += 1) {
@@ -104,10 +111,10 @@ function reviewRows(fileName, rows) {
     const routeText = toUpperText(row[8]);
     const distance = toNumber(row[14]);
 
-    if (inboundMethod === "JIS" && distance !== null && distance > 20) {
-      pushTag(tags, "JIS零件距离>20KM");
+    if (inboundMethod === "JIS" && modeText === "DR SUP" && distance !== null && distance > 20) {
+      pushTag(tags, "JIS直运距离>20KM");
     }
-    if (distance !== null && distance >= 300 && modeText !== "VMI") {
+    if (distance !== null && distance >= 300 && modeText === "MR 3PL") {
       pushTag(tags, ">300KM建议规划VMI");
     }
     if (distance !== null && distance < 300 && modeText === "TS 3PL-VMI") {
@@ -119,6 +126,15 @@ function reviewRows(fileName, rows) {
       if (!WHITELIST_COMBOS.has(combo)) {
         pushTag(tags, "供货方式组合异常");
       }
+    }
+
+    const site = toText(row[9]);
+    const coverage = await resolveCoverageBySite(site);
+    if (COVERAGE_ZERO_REQUIRED_MODES.has(modeText) && coverage !== null && coverage === 0) {
+      pushTag(tags, "站点尚未承运");
+    }
+    if (COVERAGE_POSITIVE_FORBIDDEN_MODES.has(modeText) && coverage !== null && coverage > 0) {
+      pushTag(tags, "站点已在承运");
     }
 
     if (tags.length === 0) {
@@ -155,7 +171,7 @@ function readSheetRows(filePath) {
   });
 }
 
-async function reviewInboundFiles(files) {
+async function reviewInboundFiles(files, options = {}) {
   const rows = [];
 
   for (const file of files) {
@@ -166,7 +182,8 @@ async function reviewInboundFiles(files) {
     }
 
     const sheetRows = readSheetRows(filePath);
-    rows.push(...reviewRows(fileName, sheetRows));
+    const reviewedRows = await reviewRows(fileName, sheetRows, options);
+    rows.push(...reviewedRows);
   }
 
   return rows;

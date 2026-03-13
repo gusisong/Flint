@@ -1,516 +1,251 @@
-# Flint 通用工具平台 PRD（V2.1 — Electron）
-
-> **文档定位**：Flint 是一个基于 **Electron** 的高扩展性通用桌面工具平台。本文档定义平台基座能力及四页面 MVP（运输协议外发、Inbound 规划审查、供应商管理、系统设置）的统一需求基线。
->
-> **重大变更**：V2.0 将技术栈从 Python + Flet 全面迁移至 Electron + Vue 3，以实现对 `ui/frontend_demo.html` 设计稿的 100% 视觉还原，并统一为 JavaScript 单语言栈。V2.1 在此基础上完成交互微调：右侧按钮缩放与配色重构、模块3单选行交互、模块1与模块3去除手动刷新按钮并转为自动刷新策略。
-
----
-
-## 1. 系统架构与技术栈
-
-| 层级 | 技术选型 | 说明 |
-| --- | --- | --- |
-| **运行时** | Electron | 桌面窗口容器，主进程 + 渲染进程 |
-| **前端框架** | Vue 3 | 渲染进程，单文件组件 |
-| **样式** | 原生 CSS | 复用 `ui/frontend_demo.html` 设计系统 |
-| **构建工具** | Vite | Electron Forge + `@electron-forge/plugin-vite` |
-| **本地存储** | SQLite3 | `better-sqlite3`（同步 API） |
-| **并发控制** | `async/await` + `AbortController` | 替代 Python `threading` |
-| **邮件** | Nodemailer | SMTP 发送 + 连接池 |
-| **Excel 解析** | SheetJS (xlsx) | 统一处理 `.xlsx` + `.xls` |
-| **加密** | Node.js `crypto` | AES-256-GCM，首次启动生成密钥 |
-| **日志** | electron-log | 滚动策略（5MB × 3） |
-| **测试** | Vitest | 与 Vite 集成 |
-| **打包与分发** | electron-builder | Windows (NSIS) 优先，兼容跨平台 |
-| **开发语言** | JavaScript (ES2022) | 可渐进迁移至 TypeScript |
+# Flint Product Requirements Document / Flint 产品需求文档
 
-### 1.1 架构概览
+Version 2026-03-13 (Architecture-Aligned Edition) / 版本 2026-03-13（架构对齐版）
 
-```text
-┌──────────────────────────────────────────────┐
-│  渲染进程 — Vue 3 + 原生 CSS + Vite          │
-│  (前端页面、用户交互、数据展示)               │
-└──────────────────┬───────────────────────────┘
-                   │ IPC (contextBridge)
-┌──────────────────┴───────────────────────────┐
-│  主进程 — Node.js                             │
-│  ┌──────────┐ ┌──────────┐ ┌───────────────┐ │
-│  │ Database │ │ Security │ │ TaskManager   │ │
-│  │(sqlite3) │ │ (crypto) │ │(AbortCtrl)    │ │
-│  └──────────┘ └──────────┘ └───────────────┘ │
-│  ┌──────────┐ ┌──────────┐ ┌───────────────┐ │
-│  │Nodemailer│ │ SheetJS  │ │ electron-log  │ │
-│  └──────────┘ └──────────┘ └───────────────┘ │
-└──────────────────────────────────────────────┘
-```
+## 0. Document Positioning / 文档定位
 
----
+- 中文：本 PRD 是 Flint 当前主基线文档，目标是让需求、实现与测试保持一致，减少后续开发中的信息噪声。
+- English: This PRD is the single baseline for Flint, ensuring requirements, implementation, and tests stay aligned while minimizing noise during future development.
 
-## 2. 核心平台基座需求
+- 中文：本版已剔除与当前 Electron + Vue 实现无关或阶段性过时内容，保留当前可执行范围与明确的短期演进项。
+- English: This edition removes content that is irrelevant to the current Electron + Vue implementation or temporarily outdated, while retaining executable scope and near-term roadmap items.
 
-### 2.1 工作区机制
+- 中文：主文档路径固定为 Flint_PRD.md。
+- English: The canonical document path is Flint_PRD.md.
 
-* 运行目录内创建 `data/`。
-* 数据库存放 `data/platform_core.db`。
-* 系统日志存放 `data/logs/system.log`。
-* 加密密钥存放 `data/secret.key`（AES-256-GCM，首次启动自动生成）。
+## 1. Product Baseline / 产品基线
 
-### 2.2 模块化插件系统
+### 1.1 Runtime Architecture / 运行时架构
 
-* 统一 `BaseModule` 接口：`getName()`、`getIcon()`、`registerIpcHandlers()`、`onShutdown()`。
-* 主进程启动时加载模块注册表，通过 IPC 暴露各模块 API。
-* 渲染进程通过 `contextBridge` 调用模块功能。
-
-### 2.3 配置与安全中心
-
-* 全局配置、模块配置统一入库，不使用明文配置文件。
-* SMTP 密码等敏感信息使用 AES-256-GCM 加密存储。
-* 首次启动时生成新密钥，无需迁移旧 Fernet 格式数据。
-
-### 2.4 停机与日志
-
-* 关闭窗口时触发全局 `AbortController.abort()`。
-* 等待后台异步任务安全收尾后再退出。
-* 系统日志使用 `electron-log` 滚动策略（5MB × 3）。
-* 启动失败需写入 `data/logs/startup_error.log`，并在界面弹窗提示错误与日志路径。
-
----
-
-## 3. 子模块A：运输协议外发
-
-### 3.1 数据模型
-
-1. `suppliers`：供应商与邮箱映射。
-2. `email_tasks`：发送任务队列与状态。
-3. `module_configs`：正则与模板等动态配置。
-
-### 3.2 业务流
-
-1. 用户通过固定拖拽区域上传文件（支持分批多次上传）并持久化到 `data/mail_uploads/`。
-2. 列表中按“文件行为单位”勾选待发送项（支持多选与全选）。
-3. 点击“开始发送”弹出标题补全对话框，标题规则：`aaa零件供货方式确认_xxxxx`（`aaa`可空，`xxxxx`为供应商5位编号）。
-4. 用户确认后进入后台异步队列发送，逐条检查 `AbortSignal`。
-5. 成功置 `SUCCESS`，失败置 `FAILED`。
-6. 支持删除行项目，并同步删除持久化目录中的对应文件。
-7. 支持“隐藏已发送”快速过滤（隐藏 `SUCCESS`，保留 `PENDING` / `FAILED`）。
-
-### 3.3 限流策略
-
-* 单连接顺序发送。
-* `RATE_INITIAL_DELAY=1.0`，`RATE_MAX_DELAY=10.0`，`RATE_MIN_DELAY=0.1`。
-* 421 窗口触发冷却 + 延时翻倍；连续成功后平滑降速。
-
-### 3.4 列表交互能力（V2.1）
-
-* 功能区中的所有列表模块均支持列宽手动拖拽调整；默认列宽自适应。
-* 用户拖拽后的列宽需持久化到本地，下次打开应用自动恢复。
-* 功能区中的所有列表模块均不提供表头排序，以保持页面视觉简洁。
-
----
-
-## 4. 子模块B：Inbound 规划审查
-
-### 4.1 模块定位
-
-* 审查 `.xlsx` / `.xls`（使用 SheetJS 统一解析）。
-* 输出可追踪日志并支持导出。
-* 审查结果落库（任务表 + 明细表）。
-
-### 4.2 功能范围
-
-1. 文件选择（`dialog.showOpenDialog()` 系统原生对话框）与批量导入。
-2. 规则执行（配置化存储于 `module_configs`）。
-3. 同行多异常合并展示。
-4. 一次性审查结果展示（点击“开始审查”后完成批处理并回填页面）。
-5. 日志查看。
-6. 日志导出（CSV）。
-
-### 4.6 Inbound 结果表字段（V2.1）
-
-* 字段顺序：文件、行号、工厂(C)、供应商号(D)、供应商名称(E)、零件号(A)、零件名称(B)、问题标签。
-* “问题”字段采用多彩语义 Tag 展示，不再使用拼接长字符串。
-* Tag 文案采用以下集合：`供应商编码不一致`、`Inbound方式错误`、`缺少必填字段`、`运输距离超限`、`VMI规则冲突`、`白名单外组合`。
-* 同一行命中多个规则时展示全部 Tag。
-* “级别”字段暂不展示，待后续定义等级标准后再引入。
-
-### 4.3 规则执行约束
-
-* 第一行为标题行，不审查。
-* A/C/D/G/H/I/J/L/M 为空报缺失。
-* D 与 J 前五位不一致报错。
-* O >= 300 且 H 非 VMI 报错。
-* O < 300 且 H 为 `TS 3PL-VMI` 报错。
-* G 为 `JIS` 且 O > 20 报错。
-* G/H/I 不在白名单报错。
-
-### 4.4 解析引擎策略
-
-* `.xlsx` 与 `.xls` 均使用 SheetJS (`xlsx` npm 包) 统一解析。
-
-### 4.5 V1.0 固定白名单矩阵（G/H/I）
-
-| G | H | I |
-| --- | --- | --- |
-| LAH | DR 3PL | ENG |
-| JIS | DR Sup | DR Sup |
-| JIT | DR Sup | DR Sup |
-| LAH | DR Sup | DR Sup |
-| JIT | MR 3PL | CFF-JIT |
-| LAH | MR 3PL | CFF-LAH |
-| LAH | TS 3PL-CC | CFF-LAH |
-| LAH | TS Sup-CC | DR Sup |
-| JIT | TS 3PL-VMI | AHKCC |
-| JIT | TS 3PL-VMI | CSKCC |
-| JIT | TS 3PL-VMI | ENGKCC |
-| JIT | TS 3PL-VMI | FJKCC |
-| JIT | TS 3PL-VMI | GDKCC |
-| JIT | TS 3PL-VMI | GZKCC |
-| JIT | TS 3PL-VMI | HBKCC |
-| JIT | TS 3PL-VMI | JSKCC |
-| JIT | TS 3PL-VMI | NCKCC |
-| JIT | TS 3PL-VMI | NEKCC |
-| JIT | TS 3PL-VMI | SHKCC |
-| JIT | TS 3PL-VMI | ZJKCC |
-| LAH | TS 3PL-VMI | AHKCC |
-| LAH | TS 3PL-VMI | CSKCC |
-| LAH | TS 3PL-VMI | ENGKCC |
-| LAH | TS 3PL-VMI | FJKCC |
-| LAH | TS 3PL-VMI | GDKCC |
-| LAH | TS 3PL-VMI | GZKCC |
-| LAH | TS 3PL-VMI | HBKCC |
-| LAH | TS 3PL-VMI | JSKCC |
-| LAH | TS 3PL-VMI | NCKCC |
-| LAH | TS 3PL-VMI | NEKCC |
-| LAH | TS 3PL-VMI | SHKCC |
-| LAH | TS 3PL-VMI | ZJKCC |
-| JIS | TS Sup-VMI | TS Sup-VMI |
-| JIT | TS Sup-VMI | TS Sup-VMI |
-| LAH | TS Sup-VMI | TS Sup-VMI |
-
----
-
-## 5. 文档治理与版本规则
-
-1. 所有已批准变更必须同步更新主 PRD（中英双语）。
-2. 主 PRD 唯一基线为 `Flint_PRD.md`。
-3. 技术栈切换为主版本升级：`V1.0`（Flet）→ `V2.0`（Electron）。
-4. 小改升小版本（`V2.1`、`V2.2`）。
-5. 开发过程中持续更新 PRD，确保文档与实现同步。
-
----
-
-## 6. 前端信息架构（V2.1）
-
-### 6.1 页面结构
-
-1. Inbound 规划审查
-2. 运输协议外发
-3. 供应商管理
-4. 系统设置
-
-### 6.2 导航与图标
-
-* 四页面均作为独立模块接入左侧导航。
-* 侧栏图标采用 Google Material Symbols（`font-variation-settings` 控制线性风格），语义与页面功能一致。
-* 项目图标使用 `assets/Flint_Icon.png`。
-* 品牌字体使用 Space Grotesk，正文字体使用 Noto Sans SC。
-
-### 6.3 操作区布局
-
-* 高频主操作按钮靠左。
-* 低频次操作按钮靠右。
-* 按钮文案需控制在单行内显示，按钮等宽（`width: 132px`）。
-* 右侧功能区按钮统一缩小 15%（宽度由 132px 调整为约 112px），降低视觉噪声并凸显左侧主流程按钮。
-* 核心功能按钮采用高饱和强调色，非核心按钮采用低饱和中性色，确保主次对比清晰。
-* 撤销“启动任务类按钮固定浅蓝色”约束，改为遵循页面整体视觉风格进行动态配色。
-
-### 6.6 页面交互细化（V2.1）
-
-* 模块1（Inbound）移除“刷新日志”手动按钮，不配置后台自动刷新；采用“开始审查”触发的一次性结果展示。
-* 模块1移除“重置状态”按钮与对应后端重置逻辑。
-* 模块2（运输协议外发）将“扫描工作区”改为“拖拽上传”模式，放弃项目文件夹管理方式。
-* 模块2上传入口优化为固定拖拽区，拖拽上传替代点击上传按钮。
-* 模块2支持文件行多选/全选、删除文件（同步删除持久化文件）、隐藏已发送（仅隐藏 `SUCCESS`）。
-* 模块2删除按钮文案调整为“删除文件”，并采用警示色样式。
-* 模块2移除“重试失败”按钮及对应后端逻辑。
-* 模块2发送前弹框补全标题前缀，按 `aaa零件供货方式确认_xxxxx` 规则生成最终标题（`aaa`可空）。
-* 模块3（供应商管理）新增单选行选择控件（radio），支撑“编辑供应商/切换启用”基于当前选中行执行。
-* 模块3支持点击行内任意位置触发单选，不要求精确点击圆圈。
-* 模块3移除“刷新列表”按钮，列表由本地状态变更与后端事件驱动自动同步。
-
-### 6.4 数据展示策略
-
-* 顶部 KPI 卡片在未接入真实指标前不展示，避免假数据误导。
-* Inbound 日志采用表格视图，支持关键字过滤与异常定位。
-* 模块1/2/3 列表统一支持：列宽拖拽与宽度持久化，不提供表头排序。
-
-### 6.5 视觉设计基线
-
-* 设计稿基线为 `ui/frontend_demo.html`，Electron 前端需 100% 还原。
-* 设计系统采用 CSS 变量（`--bg`、`--ink`、`--brand`、`--line` 等），确保全局一致性。
-* 导航激活态：线性渐变 (`#0c8f78` → `#0da387`) + `translateX(4px)` + `box-shadow` 辉光。
-* 背景辉光：双 `radial-gradient` 叠加（绿 + 蓝）。
-* 页面切换动画：`@keyframes reveal`（opacity + translateY）。
-* 面板样式：`border-radius: 16px` + 微阴影 (`box-shadow: 0 8px 20px rgba(0,0,0,0.04)`)。
-* 文件选择使用 Electron 原生 `dialog.showOpenDialog()`，支持多选与格式过滤。
-
-### 6.7 Demo 模块化拆分基线（V2.1）
-
-* UI Demo 采用分模块目录组织：`ui/demo_modular/index.html` + `pages/` + `styles/` + `scripts/`。
-* `scripts/` 按 shared 与业务模块拆分（inbound/mail/supplier/table），避免单文件脚本膨胀。
-
-### 6.8 无边框窗口控件与功能区避让（V2.2）
-
-* 中文：右上角最小化/最大化/关闭三按钮采用贴边布局（`top: 0; right: 0`），去除外框与容器底色，仅保留按钮 hover 反馈；以保证无边框窗口视觉一致性。
-* English: The top-right minimize/maximize/close controls must be edge-aligned (`top: 0; right: 0`), with no surrounding border or container fill, while retaining button hover feedback for a frameless and integrated visual style.
-* 中文：主内容区域增加统一顶部安全区，避免各模块右侧功能区与窗口三按钮发生遮挡或点击冲突。
-* English: A global top safe-area must be reserved for the main content to prevent overlap and click conflicts between module right-side action areas and window control buttons.
-* 中文：布局修正为“左侧导航全高度背景 + 右侧主内容独立顶部留白”，右侧功能区上沿可上移且不与窗口三按钮重叠，页面上下留白保持均衡。
-* English: Layout is adjusted to "full-height left navigation background + independent top spacing for right main content", allowing the right action area to move upward without overlapping window controls while keeping balanced vertical whitespace.
-
-### 6.9 模块1真实审查实现（V2.2）
-
-* 中文：Inbound 规划审查禁止前端或主进程伪造示例结果；点击“开始审查”后必须基于上传文件执行真实解析与规则校验，并回填真实结果。
-* English: Inbound review must not use mocked sample rows in either renderer or main process. After "Start Review", uploaded files must be truly parsed and validated by rules, and real results must be returned to the UI.
-* 中文：审查引擎统一采用 SheetJS (`xlsx`) 读取首个工作表，按 PRD 规则输出问题标签（供应商编码不一致、Inbound方式错误、缺少必填字段、运输距离超限、VMI规则冲突、白名单外组合）。
-* English: The review engine uses SheetJS (`xlsx`) to parse the first worksheet and emits PRD-defined issue tags (supplier-code mismatch, inbound-method error, required-field missing, distance over-limit, VMI conflict, and whitelist violation).
-* 后续正式开发（Electron + Vue）必须保持同等模块边界：页面层、公共组件层、业务状态层分离。
-* `ui/frontend_demo.html` 保留为回退与视觉对照基线，不再继续承载新增交互逻辑。
-
----
-
-## 7. MVP 实现基线（V2.1）
-
-### 7.1 迁移范围
-
-* 技术栈：Python + Flet → Electron + Vue 3 + JavaScript。
-* 核心服务全面重写（逻辑等价）：Database、Config、Security、TaskManager、Workspace、Logging。
-* 四个业务模块全面重写（逻辑等价）：邮件发送、Inbound 审查、供应商管理、系统设置。
-* 前端基于 `frontend_demo.html` 改造为功能性 Vue 组件。
-* 测试框架从 Python `pytest` 迁移至 `Vitest`。
-* `schema.sql` 直接复用，零改动。
-
-### 7.2 功能清单（与 V1.0 等价）
-
-* 平台入口、导航、四页面模块注册与切换。
-* Core 服务：Workspace / DB / 配置 / 安全 / 任务 / 日志。
-* 运输协议外发页面：文件上传（可分批）、多选/全选、标题补全弹框发送、删除文件、隐藏已发送、上传文件持久化。
-* Inbound 规划审查页面：审查、落库、导出、日志表格过滤、一次性结果展示、问题 Tag 化。
-* 供应商管理页面：新增、编辑、单行选择、启停切换（基于选中行）、自动列表同步。
-* 系统设置页面：SMTP、正则、签名加载与保存。
-
-### 7.5 后端同步设计（V2.1）
-
-* Inbound 模块新增单次完成事件：`inbound:review-completed`，用于一次性回填审查结果。
-* Mail 模块新增上传持久化与队列接口：`mail:upload-files`、`mail:get-tasks`、`mail:delete-tasks`、`mail:start-send`。
-* Mail 模块从“渲染进程本地状态”升级为“主进程 IPC 队列驱动”，发送进度通过 `mail:queue-progress` / `mail:queue-completed` 事件回推。
-* Mail 模块新增发送前标题规则参数：`subjectPrefix`（允许空字符串），主进程按供应商编码生成最终标题。
-* Mail 模块新增过滤参数：`hideSent=true` 时默认隐藏 `SUCCESS` 项。
-* Inbound 模块补齐上传与结果链路：`inbound:upload-files`、`inbound:get-uploads`、`inbound:remove-upload`、`inbound:start-review`、`inbound:get-last-review`、`inbound:export-csv`。
-* Supplier 模块新增选择态相关接口：`supplier:update-status(code, enabled)`、`supplier:get-list()`，前端基于单选行提交状态切换。
-* Supplier 模块补齐维护接口：`supplier:create`、`supplier:update`，并通过 `supplier:list-updated` 实现列表自动同步。
-* Settings 模块新增配置读写接口：`settings:get`、`settings:save`，主进程持久化保存 SMTP 与发件配置。
-* 列表刷新策略调整为“写入后自动回读 + 事件广播”：主进程写库成功后主动推送 `supplier:list-updated`。
-* 移除模块1/模块3对手动刷新按钮的依赖，避免无效重复请求（模块1保留“导出 CSV”按钮）。
-
-### 7.3 自动化测试
-
-* 使用 Vitest 建立等价测试集。
-* Core 服务：配置、加解密、任务管理。
-* 业务引擎：Inbound 规则判定、邮件限流器。
-* 模块注册：四页面加载与默认配置初始化。
-
-### 7.4 下一迭代
-
-* 供应商导入能力与批量编辑能力。
-* 系统设置更细粒度校验与安全策略提示。
-* 更高覆盖率集成测试（UI 交互、SMTP 仿真、并发压力）。
-* 自动更新集成（electron-updater）。
-
-### 7.6 Windows 交付与 OTA 基线（V2.1）
-
-* Windows 交付形态采用 NSIS 安装包（单一 Stable 渠道）。
-* 用户端无需额外安装依赖（Node.js / Python 等均不需要）。
-* OTA 策略采用“检测到新版本后弹窗确认更新”。
-* 更新源采用 OneDrive 公开只读分享链接（后续可升级为鉴权访问）。
-* 更新元数据采用稳定单文件清单（建议 `stable-manifest.json`）+ 版本安装包资产。
-* 客户端更新流程：启动检测 → 版本比较 → 下载 → 校验（SHA256）→ 用户确认重启安装。
-
----
-
-## 8. 已确认决策
-
-### V1.0 决策（保留）
-
-1. 关闭窗口必须等待后台任务安全结束。
-2. 邮件扫描任务采用全状态去重。
-3. Inbound Rule7 采用固定白名单（V1.0）。
-4. 文档策略采用单主文档：`Flint_PRD.md`。
-5. 前端本轮范围为四页面 MVP。
-6. 低频操作按钮保持右侧直出，按钮等宽且文案单行。
-7. KPI 延后至真实指标接入后再展示。
-8. 系统设置页直接接入配置服务并支持保存。
-
-### V2.0 新增决策（2026-03-11）
-
-* 编号 9：技术栈从 Python + Flet 全面迁移至 Electron + Vue 3。
-* 编号 10：开发语言切换为 JavaScript (ES2022)，后续可渐进迁移 TypeScript。
-* 编号 11：前端视觉 100% 还原 `ui/frontend_demo.html`，采用原生 CSS。
-* 编号 12：加密方案采用 AES-256-GCM（全新密钥，不迁移旧 Fernet 数据）。
-* 编号 13：Excel 解析统一使用 SheetJS，替代 `openpyxl` + `xlrd`。
-* 编号 14：邮件发送使用 Nodemailer，替代 Python `smtplib`。
-* 编号 15：并发控制使用 `async/await` + `AbortController`，替代 Python `threading`。
-* 编号 16：文件选择使用 Electron 原生 `dialog.showOpenDialog()`，不再需要路径输入对话框。
-* 编号 17：打包使用 electron-builder，替代 PyInstaller。
-* 编号 18：PRD 在开发过程中持续更新，确保文档与实现同步。
-* 编号 20：按钮配色采用三级体系：Primary（品牌绿主操作）、Accent（蓝色强引导操作）、Ghost（浅灰次要操作）。
-* 编号 21：移除系统设置中的 TLS 与 Dry Run 开关，精简不必要的配置项。
-* 编号 22：支持深浅色（Dark/Light）主题自适应及手动切换。
-* 编号 23：导航模块顺序调整：Inbound 规划审查作为默认首页，运输协议外发调整为第二模块。
-
-### V2.1 新增决策（2026-03-12）
-
-* 编号 24：右侧功能区按钮统一缩小 15%（132px → 112px），降低侧向视觉重量。
-* 编号 25：按钮配色策略调整为“核心高饱和、非核心低饱和”，并废止“启动按钮固定浅蓝色”要求。
-* 编号 26：供应商管理页新增单选行控件（radio），右侧动作按钮基于单选行执行。
-* 编号 27：Inbound 页面移除“刷新日志”按钮，改为“开始审查”后一次性展示机制。
-* 编号 28：供应商管理页移除“刷新列表”按钮，改为自动同步机制。
-* 编号 29：Inbound 不配置后台自动刷新日志；点击“开始审查”后一次性展示结果。
-* 编号 30：Inbound 结果表新增字段：工厂(C)、供应商号(D)、供应商名称(E)、零件号(A)、零件名称(B)。
-* 编号 31：Inbound “问题”字段改为多彩语义 Tag，且同一行展示全部命中 Tag。
-* 编号 32：Inbound 结果表移除“级别”字段，等待等级标准确定后再启用。
-* 编号 33：功能区所有列表支持列宽拖拽，默认自适应，用户调整结果持久化本地。
-* 编号 34：功能区所有列表不支持表头排序，避免排序箭头影响页面美观。
-* 编号 35：模块2改为“拖拽上传”模式，支持分批多次上传并持久化至 `data/mail_uploads/`。
-* 编号 36：模块2列表支持文件行多选/全选、删除行项目（同步删除持久化文件）、隐藏已发送（仅 `SUCCESS`）。
-* 编号 37：模块2发送前弹框补全标题，`aaa`允许为空；最终标题格式为 `aaa零件供货方式确认_xxxxx`。
-* 编号 38：模块3支持点击行任意位置触发单选，提升操作便利性。
-* 编号 39：模块1移除“重置状态”按钮及对应后端逻辑。
-* 编号 40：模块2删除按钮文案调整为“删除文件”，并采用警示色样式。
-* 编号 41：模块2移除“重试失败”按钮及对应后端逻辑。
-* 编号 42：所有上传入口改为固定拖拽区域，拖拽上传替代点击上传按钮。
-* 编号 43：模块1拖拽上传区下方需显示已上传文件名清单（浅色小字体），并支持点击“小叉”移除文件。
-* 编号 44：模块2“隐藏已发送 / 显示已发送”按钮需配套状态图标，强化当前过滤状态识别。
-* 编号 45：左上角平台副标题由“物流运营工具平台”更新为“入厂物流规划运营工具平台”。
-* 编号 46：Demo 从单文件拆分为模块化目录结构（pages/styles/scripts），并要求后续正式开发保持同架构边界。
-* 编号 47：模块2“隐藏已发送 / 显示已发送”按钮图标实现定版为 Unicode：`🚫`（隐藏已发送）与 `👁`（显示已发送）。
-* 编号 48：模块1上传文件清单在 Demo 中增加本地持久化队列（模拟后端同步），新增/删除文件需实时更新队列状态。
-* 编号 49：正式开发已启动，工程骨架目录固定为 `electron_app/`。
-* 编号 50：旧栈（Python + Flet）采用“逐步替换”策略，不一次性下线。（已被编号 60 覆盖）
-* 编号 51：首批迁移模块优先选择模块1（Inbound 规划审查）。
-* 编号 52：首批迁移阶段采用“渲染进程本地状态 + IPC 预留”数据链路。
-* 编号 53：第二批迁移优先模块2（运输协议外发），先完成前端可交互闭环。
-* 编号 54：模块2迁移阶段发送结果策略采用“随机成功/失败”，删除策略为“仅删除当前勾选项”。
-* 编号 55：模块2已切换为主进程 IPC 数据链路（上传/查询/发送/删除 + 进度事件），上传文件持久化路径迁移到 Electron `userData/data/mail_uploads/`。
-* 编号 56：模块1已切换为主进程 IPC 数据链路，上传队列与最近审查结果持久化到 Electron `userData/data/`。
-* 编号 57：模块3已完成主进程持久化联通，支持新增/编辑/启停并通过事件驱动自动同步列表。
-* 编号 58：模块4已完成配置中心读写链路，SMTP 与发件配置持久化到本地数据目录。
-* 编号 59：Electron 工程新增 Vitest 自动化测试基线，`npm test` 为交付验收必跑项。
-* 编号 60：旧栈（Python + Flet）已正式下线，仓库中所有 Python 运行时代码与依赖文件已清理，运行栈统一为 Electron + Vue。
-* 编号 61：Windows 最终交付形态确定为 NSIS 安装包，默认仅维护 Stable 渠道。
-* 编号 62：OTA 更新体验确定为“检测到新版本后弹窗确认更新”。
-* 编号 63：OTA 资产源确定为 OneDrive 公开只读分享链接。
-* 编号 64：用户侧运行不依赖本机额外开发环境（无需单独安装 Python/Node.js）。
-* 编号 65：桌面端窗口改为无边框设计，并提供 VS Code 风格自定义标题栏（最小化/最大化/关闭）。
-* 编号 66：OTA 入口采用“双入口策略”：应用启动自动检查 + 系统设置页“立即检查更新”手动触发。
-* 编号 67：正式版前端视觉基线强制与 `ui/frontend_demo.html` 保持一致，并要求 `demo_modular` 与正式版同源样式。
-* 编号 68：右侧主功能区顶部留白下调为独立安全区，确保页面上沿不与右上角窗口三按钮重叠（中英同约束）。
-* 编号 69：所有模块右侧功能区按钮统一尺寸与风格（等宽、统一边框与背景、统一悬停反馈），禁止右侧操作按钮出现混合样式。
-* 编号 70：模块1拖拽上传必须解析到真实文件系统路径后再入队；路径不可访问文件禁止入队并向前端反馈跳过数量。
-* 编号 71：模块1开始审查后前端需主动回读最新结果，不能仅依赖异步事件，避免“审查已启动但界面不刷新”。
-* 编号 72：所有列表模块默认列宽按内容自适应；同时支持手动拖拽列宽调整，并保持横纵滚动条按需显示。
-* 编号 73：所有列表模块文本字号统一下调 2 级；模块1功能区左下角分类统计（编码/距离/规则）移除，仅保留总问题摘要。
-* 编号 74：列表列宽拖拽结果按“模块页 + 列名”维度持久化到本机本地配置，并在下次进入页面时自动恢复。
-* 编号 75：所有列表模块标题栏字号上调 2 级，标题栏在纵向滚动时保持冻结（sticky header）。
-* 编号 76：所有列表模块滚动条样式统一为透明细线风格，默认隐藏，仅在交互时可见。
-* 编号 77：模块1导出日志交互改为“每次导出弹出另存为对话框选择路径”，导出格式保持 CSV。
-* 编号 78：在编号 75 基础上，所有列表模块标题栏与内容栏字号再各上调 1 级（标题/内容同步增量）。
-* 编号 79：模块1导出日志需先将前端响应式数据转换为可序列化对象后再调用 IPC，避免 `An object could not be cloned.` 错误。
-* 编号 80：程序启动默认最大化显示（Windows 场景），并将任务栏/窗口图标统一替换为 `Flint_Icon` 资产。
-* 编号 81：模块1导出 CSV 需写入 UTF-8 BOM，确保 Windows Excel 打开时中文不乱码。
-* 编号 82：所有页面功能区上沿需下移，避免与右上角窗口控制按钮重叠；窗口拖拽采用方案B（页面标题区可拖拽）。
-* 编号 83：模块3新增“删除供应商”单选删除能力，移除“切换启用”按钮，并将在册供应商统一视为生效状态。
-* 编号 84：模块3右侧新增供应商号查询组件（与按钮风格尺寸对齐）；“新增/编辑”弹框内供应商号与邮箱为必填项。
-
----
-
-## 9. Approved Delta (Bilingual, V2.1)
-
-1. CN: 右侧功能区按钮统一缩小 15%，提升主流程按钮的视觉聚焦。
-    EN: Right-side action buttons are reduced by 15% to improve visual focus on primary workflow actions.
-2. CN: 按钮配色改为“核心高饱和 / 非核心低饱和”，不再强制使用浅蓝启动按钮。
-    EN: Button colors now follow a "high-saturation for core actions / low-saturation for non-core actions" strategy, replacing the fixed light-blue start-button rule.
-3. CN: 供应商管理引入单选行交互，编辑与启停操作必须绑定当前选中供应商。
-    EN: Supplier Management introduces single-row selection; edit and enable/disable actions must be bound to the currently selected supplier.
-4. CN: Inbound 页面改为自动日志刷新，移除手动刷新入口。
-    EN: Inbound removes manual refresh entry points and uses a one-shot result display after each review run.
-5. CN: 供应商列表改为自动同步，移除手动刷新按钮。
-    EN: Supplier list synchronization is now automatic, and the manual refresh button is removed.
-6. CN: 后端新增事件驱动同步：`inbound:review-completed` 与 `supplier:list-updated`。
-    EN: Backend uses event-driven sync channels: `inbound:review-completed` and `supplier:list-updated`.
-7. CN: Inbound 结果表新增 5 个业务字段（工厂、供应商号、供应商名称、零件号、零件名称），并移除“级别”字段。
-    EN: Inbound result table adds five business fields (plant, supplier code, supplier name, part number, part name) and removes the "severity" column.
-8. CN: Inbound 问题展示改为语义化多彩 Tag，标签文案为用户确认版本，且同一行展示全部标签。
-    EN: Inbound issue display is converted to user-approved semantic colored tags, and all matched tags are shown for each row.
-9. CN: 所有列表支持列宽拖拽与本地持久化，不提供表头排序。
-    EN: All list modules support manual column resizing with local persistence, without header sorting.
-10. CN: 模块2改为文件上传与行选择发送模式，支持多选/全选、删除行项目与隐藏已发送。
-    EN: Module 2 is redesigned to file-upload and row-selection sending, including multi-select/select-all, row deletion, and hide-sent filtering.
-11. CN: 模块2上传文件持久化目录固定为 `data/mail_uploads/`，删除行项目需同步删除对应文件。
-    EN: Module 2 persists uploaded files under `data/mail_uploads/`, and row deletion must remove corresponding persisted files.
-12. CN: 模块3支持点击行任意位置完成单选，不再要求精确点击单选圆圈。
-    EN: Module 3 supports single-select by clicking anywhere on a row, removing the need to click the radio circle precisely.
-13. CN: 模块1移除“重置状态”，模块2移除“重试失败”，减少冗余操作。
-    EN: Module 1 removes "Reset Status" and Module 2 removes "Retry Failed" to reduce redundant actions.
-14. CN: 所有上传入口统一改为拖拽上传区域，替代点击上传按钮。
-    EN: All upload entry points are unified as drag-and-drop zones, replacing click-upload buttons.
-15. CN: 模块1上传区下方新增已上传文件名清单（浅色小字体），最多展示10条，并支持点击“小叉”移除文件。
-    EN: Module 1 adds an uploaded-file name list below the drop zone (light small text), shows up to 10 entries, and supports removing files via a small close icon.
-16. CN: 模块2“隐藏已发送 / 显示已发送”按钮增加状态图标，便于快速识别当前过滤模式。
-    EN: Module 2 adds state icons to the "Hide Sent / Show Sent" toggle to improve quick recognition of the current filter mode.
-17. CN: 左上角平台副标题更新为“入厂物流规划运营工具平台”。
-    EN: The top-left platform subtitle is updated to "Inbound Logistics Planning & Operations Toolkit Platform".
-18. CN: Demo 由单文件拆分为模块化目录（pages/styles/scripts），正式开发需保持同等模块边界。
-    EN: The demo is split from a single file into a modular directory (pages/styles/scripts), and formal development must preserve equivalent module boundaries.
-19. CN: 模块2“隐藏已发送 / 显示已发送”状态图标定版为 Unicode（`🚫` / `👁`），以最小实现满足可识别性。
-    EN: Module 2 finalizes the "Hide Sent / Show Sent" state icons as Unicode (`🚫` / `👁`) for minimal yet clear status recognition.
-20. CN: 模块1上传清单在 Demo 中引入本地持久化队列以模拟后端同步，文件新增/删除需即时写回。
-    EN: Module 1 introduces a locally persisted upload queue in the demo to simulate backend synchronization; file add/remove actions must be written back immediately.
-21. CN: 正式开发阶段已启动，Electron + Vue 工程骨架目录固定为 `electron_app/`。
-    EN: Formal development has started, and the Electron + Vue project skeleton is fixed under `electron_app/`.
-22. CN: 旧栈（Python + Flet）按“逐步替换”策略迁移，避免一次性切换风险。（已被条目 32 覆盖）
-    EN: The legacy stack (Python + Flet) was planned for gradual replacement to avoid one-shot cutover risks. (Superseded by item 32.)
-23. CN: 首批业务迁移优先模块1（Inbound 规划审查），用于验证新架构落地链路。
-    EN: The first business migration wave prioritizes Module 1 (Inbound Review) to validate the new architecture delivery path.
-24. CN: 首批迁移阶段数据链路采用“渲染进程本地状态 + IPC 预留”，后续再切换真实主进程服务。
-    EN: The first migration wave uses "renderer local state + IPC reservation" as the data path, then switches to real main-process services later.
-25. CN: 第二批迁移优先模块2（运输协议外发），本轮先交付拖拽上传、多选发送、过滤与标题弹框的前端闭环。
-    EN: The second migration wave prioritizes Module 2 (Mail Dispatch), delivering a frontend interactive loop for drag upload, multi-select sending, filtering, and subject-prefix modal.
-26. CN: 模块2迁移阶段发送结果采用随机成功/失败模拟，删除策略固定为仅删除当前勾选行。
-    EN: During Module 2 migration, send results are simulated with random success/failure, and deletion is limited to currently selected rows.
-27. CN: 模块2已从渲染进程本地状态升级为主进程 IPC 队列驱动，新增 `mail:queue-progress` 与 `mail:queue-completed` 事件回推。
-    EN: Module 2 has been upgraded from renderer-local state to a main-process IPC queue flow, with `mail:queue-progress` and `mail:queue-completed` event callbacks.
-28. CN: 模块1已完成上传/移除/审查/导出全链路 IPC 落地，审查完成通过 `inbound:review-completed` 回推前端。
-    EN: Module 1 now has end-to-end IPC for upload/remove/review/export, and review completion is pushed to the renderer via `inbound:review-completed`.
-29. CN: 模块3已完成 `supplier:create` / `supplier:update` / `supplier:update-status`，列表通过 `supplier:list-updated` 自动刷新。
-    EN: Module 3 now supports `supplier:create` / `supplier:update` / `supplier:update-status`, with list auto-refresh via `supplier:list-updated`.
-30. CN: 模块4已完成 `settings:get` / `settings:save`，系统设置页可直接读写 SMTP 与发件配置。
-    EN: Module 4 now supports `settings:get` / `settings:save`, enabling direct SMTP and sender-configuration read/write from the settings page.
-31. CN: Electron 工程建立 Vitest 自动化测试基线并纳入 `npm test`，作为本轮交付验收门槛。
-    EN: The Electron project now includes a Vitest baseline integrated into `npm test`, used as a release acceptance gate in this delivery.
-32. CN: 旧栈（Python + Flet）已正式下线并完成仓库清理，后续仅维护 Electron + Vue 单栈代码。
-    EN: The legacy Python + Flet stack has been formally retired and removed from the repository; future development is maintained on the Electron + Vue single stack only.
-33. CN: Windows 最终交付形态确定为 NSIS 安装包，默认仅维护 Stable 更新通道。
-    EN: Windows final delivery is standardized as an NSIS installer, with Stable as the default and only update channel.
-34. CN: OTA 策略确定为“检测到新版本后弹窗确认更新”，避免静默更新带来的不可控风险。
-    EN: OTA strategy is set to "prompt user for confirmation when a new version is detected", avoiding risks from silent updates.
-35. CN: OTA 资产源确定为 OneDrive 公开只读分享链接，后续可按安全需求升级为鉴权访问。
-    EN: OTA assets will be hosted via a public read-only OneDrive shared link, with a future option to upgrade to authenticated access.
-36. CN: 交付目标明确为用户端免依赖运行，不要求用户额外安装 Python 或 Node.js。
-    EN: Delivery target is dependency-free runtime on user machines, requiring no additional Python or Node.js installation.
-37. CN: 桌面窗口采用无边框壳层，并实现 VS Code 风格自定义标题栏与窗口控制按钮。
-    EN: The desktop shell adopts a frameless window with a VS Code-like custom title bar and window control buttons.
-38. CN: OTA 采用“启动自动检查 + 设置页手动检查”双入口，统一更新流程与用户确认体验。
-    EN: OTA uses a dual-entry model (startup auto-check + manual check in Settings) with a unified confirmation-based update flow.
-39. CN: 前端审查基线升级为“demo_modular 与正式版同时对齐 frontend_demo”，确保样式、动效、颜色、字号一致。
-    EN: Frontend review baseline is upgraded so both demo_modular and production UI must align with frontend_demo for style, motion, colors, and typography consistency.
+- 中文：桌面壳层采用 Electron，无边框窗口，主进程负责系统能力与持久化，渲染进程采用 Vue 3 页面承载业务交互。
+- English: The desktop shell uses Electron with a frameless window; the main process owns system capabilities and persistence, while the Vue 3 renderer pages handle business interactions.
+
+- 中文：渲染进程通过 preload 暴露的 flintApi 调用 IPC，不直接访问 Node 能力。
+- English: The renderer calls IPC through flintApi exposed by preload and does not directly access Node capabilities.
+
+- 中文：当前核心目录为 electron_app/src/main（主进程与服务）与 electron_app/src/renderer（页面与 UI 逻辑）。
+- English: The current core directories are electron_app/src/main (main process and services) and electron_app/src/renderer (pages and UI logic).
+
+### 1.2 Technology Stack / 技术栈
+
+| 中文 | English |
+| --- | --- |
+| 运行时：Electron | Runtime: Electron |
+| 前端：Vue 3 + Vite | Frontend: Vue 3 + Vite |
+| 语言：JavaScript (ES2022) | Language: JavaScript (ES2022) |
+| 样式：原生 CSS 设计系统 | Styling: Native CSS design system |
+| Excel 解析：SheetJS (xlsx) | Excel parsing: SheetJS (xlsx) |
+| 邮件链路：IPC 队列驱动（当前发送结果为模拟策略） | Mail flow: IPC queue-driven (current send result uses simulation) |
+| 测试：Vitest | Testing: Vitest |
+
+### 1.3 Persistence Baseline / 持久化基线
+
+- 中文：当前持久化方案为“JSON + SQLite”混合模式，数据目录固定在程序本体目录下的 data/：业务配置与任务列表使用 JSON，NetworkTransportCoverage（发货站点承运比例）使用本地 SQLite 单文件持久化，确保首次交付即可直接可用。
+- English: The current persistence approach is a hybrid JSON + SQLite model with data rooted at data/ under the program body directory: business settings/task lists use JSON, and NetworkTransportCoverage (site transport coverage ratio) uses a local single-file SQLite database, ensuring first delivery is immediately usable.
+
+- 中文：关键 JSON 数据文件包括 mail_tasks.json、inbound_uploads.json、inbound_last_review.json、suppliers.json、settings.json。
+- English: Key JSON data files include mail_tasks.json, inbound_uploads.json, inbound_last_review.json, suppliers.json, and settings.json.
+
+- 中文：新增 SQLite 数据文件 network_transport_coverage.db，主键为 Site，核心字段为 Coverage。
+- English: A new SQLite data file network_transport_coverage.db is added, with Site as the primary key and Coverage as the core field.
+
+- 中文：上传文件目录包括 data/mail_uploads 与 data/inbound_uploads。
+- English: Upload directories include data/mail_uploads and data/inbound_uploads.
+
+## 2. Module Scope (MVP) / 模块范围（MVP）
+
+### 2.1 Inbound Review / Inbound 规划审查
+
+- 中文：支持拖拽上传文件、文件移除、开始审查、问题标签展示与 CSV 导出。
+- English: Supports drag-and-drop upload, file removal, review execution, issue-tag rendering, and CSV export.
+
+- 中文：审查结果表字段为文件、行号、工厂、供应商号、供应商名称、零件号、零件名称、问题标签。
+- English: Review table fields are file, line, plant, supplier code, supplier name, part number, part name, and issue tags.
+
+- 中文：审查规则由主进程服务执行，结果通过事件与主动回读共同回填。
+- English: Review rules are executed in the main-process service, and results are returned through both events and active readback.
+
+- 中文：新增 Coverage 联动校验：按第 J 列 Site 查询本地 NetworkTransportCoverage 后参与标签判定。
+- English: Added coverage-linked validation: column J Site is looked up in local NetworkTransportCoverage and used for tag decisions.
+
+### 2.2 Mail Dispatch / 运输协议外发
+
+- 中文：支持拖拽上传、列表多选/全选、删除文件、隐藏已发送、标题前缀确认后发送。
+- English: Supports drag upload, list multi-select/select-all, file deletion, hide-sent filtering, and send-after-subject-prefix confirmation.
+
+- 中文：发送队列由主进程维护，并通过进度事件与完成事件回推。
+- English: The send queue is maintained by the main process and pushed back via progress and completion events.
+
+- 中文：当前发送结果用于流程联调，采用模拟成功/失败策略；后续可切换为真实 SMTP 发送。
+- English: Current send results are simulation-based for flow integration and can be replaced with real SMTP delivery later.
+
+### 2.3 Supplier Management / 供应商管理
+
+- 中文：支持新增、编辑、删除、按供应商号查询、单选行操作。
+- English: Supports create, edit, delete, supplier-code filtering, and single-row selection operations.
+
+- 中文：列表通过事件驱动自动同步。
+- English: The list is synchronized automatically through event-driven updates.
+
+### 2.4 Settings / 系统设置
+
+- 中文：支持 SMTP 配置、发件信息、签名、OTA Manifest 地址，以及 OneDrive Coverage CSV 共享目录配置读写。
+- English: Supports read/write for SMTP settings, sender info, signature, OTA manifest URL, and OneDrive shared directory configuration for Coverage CSV.
+
+- 中文：支持手动检查更新，并在发现新版本后弹窗确认下载与安装。
+- English: Supports manual update checks and prompts user confirmation for download/install when a newer version is found.
+
+- 中文：新增 Coverage OTA 数据基座能力：支持手动检查共享目录 CSV 变更与手动应用入库，自动静默策略暂不启用。
+- English: Added Coverage OTA data foundation capability: supports manual check of shared-directory CSV changes and manual apply-to-database flow, while automatic silent strategy remains disabled for now.
+
+## 3. Core Business Rules / 核心业务规则
+
+### 3.1 Inbound Rule Set / Inbound 规则集
+
+- 中文：第一行视为表头，不参与审查。
+- English: The first row is treated as header and excluded from review.
+
+- 中文：A/C/D/G/H/I/J/L/M 任一缺失时标记缺少必填字段。
+- English: Missing any of A/C/D/G/H/I/J/L/M triggers required-field-missing.
+
+- 中文：D 与 J 前五位不一致时标记供应商编码不一致。
+- English: If the first five digits of D and J differ, mark supplier-code mismatch.
+
+- 中文：JIS 且距离大于 20KM、或距离与 VMI 规则冲突时标记方式/距离问题。
+- English: Mark method/distance issues for JIS with distance over 20KM or when distance conflicts with VMI rules.
+
+- 中文：G/H/I 不在白名单组合中时标记白名单外组合。
+- English: Mark whitelist violation when G/H/I combination is outside the whitelist set.
+
+- 中文：当 H 为 MR 3PL、TS 3PL-VMI、TS 3PL-CC 时，若 J 对应 Site 的 Coverage=0，则标记“站点尚未承运”。
+- English: When H is MR 3PL, TS 3PL-VMI, or TS 3PL-CC, mark "站点尚未承运" if Coverage of Site mapped by J equals 0.
+
+- 中文：当 H 为 DR Sup、TS Sup-VMI、TS Sup-CC 时，若 J 对应 Site 的 Coverage>0，则标记“站点已在承运”。
+- English: When H is DR Sup, TS Sup-VMI, or TS Sup-CC, mark "站点已在承运" if Coverage of Site mapped by J is greater than 0.
+
+### 3.2 Inbound Tag Semantics / Inbound 标签语义
+
+- 中文：标签展示以语义分组为主，允许同一行展示多个标签。
+- English: Tags are rendered by semantic groups, and multiple tags can coexist on the same row.
+
+- 中文：现网标签文案与历史文案兼容映射，避免升级期间出现展示断层。
+- English: Current and legacy tag labels are compatibility-mapped to prevent display gaps during upgrades.
+
+## 4. Data and IPC Contract / 数据与 IPC 约定
+
+### 4.1 Data Models (Current) / 数据模型（当前）
+
+- 中文：mail_tasks 记录任务标识、文件信息、供应商号、状态、标题、失败原因与时间戳。
+- English: mail_tasks stores task ID, file metadata, supplier code, status, subject, failure reason, and timestamps.
+
+- 中文：inbound_uploads 记录上传文件标识、原始路径、持久化路径与元信息。
+- English: inbound_uploads stores upload ID, original path, persisted path, and metadata.
+
+- 中文：inbound_last_review 记录最近一次审查的结果行与汇总信息。
+- English: inbound_last_review stores rows and summary for the latest review.
+
+- 中文：suppliers 记录供应商号、名称、邮箱等主数据。
+- English: suppliers stores master data including supplier code, name, and email.
+
+- 中文：settings 记录 SMTP、发件人、签名与 OTA 地址配置。
+- English: settings stores SMTP, sender, signature, and OTA URL configuration.
+
+- 中文：settings 新增 oneDriveCoverageDir 与 coverageOtaState（lastSignature、lastFilePath、lastAppliedAt、lastUpserted）用于 Coverage 数据 OTA 基座状态追踪。
+- English: settings adds oneDriveCoverageDir and coverageOtaState (lastSignature, lastFilePath, lastAppliedAt, lastUpserted) for Coverage data OTA foundation state tracking.
+
+- 中文：network_transport_coverage（SQLite）记录 Site 与 Coverage，用于 Inbound 审查规则联动查询。
+- English: network_transport_coverage (SQLite) stores Site and Coverage for rule-linked lookup during inbound review.
+
+### 4.2 IPC Channels (Baseline) / IPC 通道（基线）
+
+- 中文：窗口控制通道包括 window:minimize、window:toggle-maximize、window:is-maximized、window:close。
+- English: Window control channels include window:minimize, window:toggle-maximize, window:is-maximized, and window:close.
+
+- 中文：Inbound 通道包括 inbound:upload-files、inbound:get-uploads、inbound:remove-upload、inbound:start-review、inbound:get-last-review、inbound:export-csv。
+- English: Inbound channels include inbound:upload-files, inbound:get-uploads, inbound:remove-upload, inbound:start-review, inbound:get-last-review, and inbound:export-csv.
+
+- 中文：Mail 通道包括 mail:upload-files、mail:get-tasks、mail:start-send、mail:delete-tasks，以及事件 mail:queue-progress、mail:queue-completed。
+- English: Mail channels include mail:upload-files, mail:get-tasks, mail:start-send, mail:delete-tasks, and events mail:queue-progress and mail:queue-completed.
+
+- 中文：Supplier 通道包括 supplier:get-list、supplier:create、supplier:update、supplier:delete、supplier:update-status，以及事件 supplier:list-updated。
+- English: Supplier channels include supplier:get-list, supplier:create, supplier:update, supplier:delete, supplier:update-status, and event supplier:list-updated.
+
+- 中文：Settings 与 Update 通道包括 settings:get、settings:save、update:check、update:download-install。
+- English: Settings and update channels include settings:get, settings:save, update:check, and update:download-install.
+
+- 中文：Coverage 与数据 OTA 通道新增 coverage:import-csv、coverage:get-by-site、ota:data-check-coverage、ota:data-apply-coverage。
+- English: Coverage and data OTA channels add coverage:import-csv, coverage:get-by-site, ota:data-check-coverage, and ota:data-apply-coverage.
+
+## 5. UX and Interaction Baseline / 交互与视觉基线
+
+- 中文：四页面导航结构固定为 Inbound、运输协议外发、供应商管理、系统设置。
+- English: The four-page navigation order is fixed as Inbound, Mail Dispatch, Supplier Management, and Settings.
+
+- 中文：上传入口统一为拖拽区域，避免多入口行为差异。
+- English: Upload entry is unified as drag-and-drop zones to avoid inconsistent multi-entry behavior.
+
+- 中文：列表能力基线为多选（按模块需要）、自动同步、标签化问题展示。
+- English: List baseline includes module-appropriate multi-select, automatic synchronization, and tag-based issue display.
+
+- 中文：视觉基线延续现有 CSS 变量体系与页面动画，不在本 PRD 中重复定义历史 Demo 细节。
+- English: The visual baseline follows the existing CSS-variable system and page animations, while historical demo details are intentionally not duplicated here.
+
+## 6. Testing and Quality / 测试与质量
+
+### 6.1 Current Test Coverage / 当前测试覆盖
+
+- 中文：domain-utils.test 覆盖文件名清洗、供应商号提取、邮件标题拼装与 CSV 单元格转义。
+- English: domain-utils.test covers filename sanitization, supplier-code extraction, subject composition, and CSV cell escaping.
+
+- 中文：inbound-review.test 覆盖 Inbound 审查规则关键路径与标签产出。
+- English: inbound-review.test covers key rule paths and tag outputs of inbound review.
+
+- 中文：inbound-csv.test 覆盖 UTF-8 BOM 与中文内容导出正确性。
+- English: inbound-csv.test verifies UTF-8 BOM and Chinese-content export correctness.
+
+### 6.2 Current Gaps / 当前缺口
+
+- 中文：尚未形成窗口控制、IPC 失败重试、OTA 下载链路的自动化测试。
+- English: Automated tests are still missing for window controls, IPC failure retries, and OTA download flow.
+
+- 中文：Coverage OTA 基座已接入但静默调度、冲突策略、失败重试和回滚策略仍待专项评审后定版。
+- English: Coverage OTA foundation is integrated, but silent scheduling, conflict policy, retry behavior, and rollback strategy are pending dedicated review before finalization.
+
+- 中文：尚未覆盖真实 SMTP 集成与长队列压力场景。
+- English: Real SMTP integration and long-queue stress scenarios are not covered yet.
+
+## 7. De-scoped and Removed Content / 已剔除与降级内容
+
+- 中文：已剔除与当前实现不一致的“全量数据库化”描述；当前以 JSON + 覆盖率专项 SQLite 混合持久化为准。
+- English: "Full-database-only" descriptions inconsistent with implementation are removed; the authoritative baseline is now hybrid JSON plus a dedicated SQLite store for coverage.
+
+- 中文：已剔除大量迁移期历史决策与 Demo 过程性细节，避免对后续开发造成干扰。
+- English: Large portions of migration-stage historical decisions and demo process details are removed to avoid distracting future development.
+
+- 中文：安全加密目标保留为演进项，不再标注为当前已完成能力。
+- English: Security encryption remains a roadmap item and is no longer labeled as a completed capability.
+
+## 8. Near-term Roadmap / 近期演进路线
+
+- 中文：优先补齐配置敏感字段保护方案（例如系统凭据存储能力），降低明文风险。
+- English: Prioritize protection for sensitive config fields (for example, OS credential storage integration) to reduce plaintext risk.
+
+- 中文：将邮件发送从模拟结果切换为真实 SMTP 发送，并补充重试与限流策略。
+- English: Replace simulated mail results with real SMTP delivery and add retry/rate-control policies.
+
+- 中文：增强 OTA 安装流程的异常处理与回滚提示，提升稳定性与可解释性。
+- English: Improve OTA install flow with better exception handling and rollback guidance for stability and explainability.
+
+- 中文：覆盖率数据 OTA 当前仅完成基座（检查/应用入口与状态追踪）；静默后台更新频率、触发时机、幂等与冲突处理将在后续专题讨论中单独确认。
+- English: Coverage-data OTA currently provides only the foundation (check/apply entry and state tracking); silent background update cadence, trigger timing, idempotency, and conflict handling will be finalized in a separate follow-up discussion.
+
+## 9. Governance Rules / 治理规则
+
+- 中文：所有经批准需求与变更必须同步更新 Flint_PRD.md，且采用同段中英双语。
+- English: All approved requirements and changes must be synchronized into Flint_PRD.md using paragraph-level bilingual format.
+
+- 中文：PRD 仅描述“当前已实现能力 + 已确认近期计划”，不保留无排期的理想化设计。
+- English: The PRD must describe only current implemented capabilities and confirmed near-term plans, excluding unscheduled idealized designs.
+
+- 中文：如实现与 PRD 发生偏差，以代码现状为准先修正文档，再决策是否调整实现。
+- English: If implementation and PRD diverge, update documentation to reflect code reality first, then decide whether implementation changes are required.

@@ -108,25 +108,31 @@ const displayedFiles = computed(() => uploadedFiles.value.slice(0, 10));
 let offReviewCompleted = null;
 
 function issueTagClass(tag) {
-  if (tag === "供应商编码不一致" || tag === "发货点选择错误") {
-    return "code";
+  if (tag === "发货点选择错误" || tag === "供应商编码不一致") {
+    return "tag-site-mismatch";
   }
-  if (tag === "Inbound方式错误" || tag === "JIS零件距离>20KM") {
-    return "method";
+  if (tag === "JIS直运距离>20KM" || tag === "JIS零件距离>20KM" || tag === "Inbound方式错误") {
+    return "tag-jis-distance";
   }
   if (tag === "缺少必填字段") {
-    return "required";
+    return "tag-required-missing";
   }
-  if (tag === "运输距离超限" || tag === ">300KM建议规划VMI") {
-    return "distance";
+  if (tag === ">300KM建议规划VMI" || tag === "运输距离超限") {
+    return "tag-vmi-suggest";
   }
-  if (tag === "VMI规则冲突" || tag === "<300KM不建议规划VMI") {
-    return "vmi";
+  if (tag === "<300KM不建议规划VMI" || tag === "VMI规则冲突") {
+    return "tag-vmi-conflict";
   }
-  if (tag === "白名单外组合" || tag === "供货方式组合异常") {
-    return "whitelist";
+  if (tag === "供货方式组合异常" || tag === "白名单外组合") {
+    return "tag-whitelist";
   }
-  return "whitelist";
+  if (tag === "站点尚未承运") {
+    return "tag-not-covered";
+  }
+  if (tag === "站点已在承运") {
+    return "tag-covered";
+  }
+  return "tag-default";
 }
 
 function updateSummaryWithRows(rows, fileCount) {

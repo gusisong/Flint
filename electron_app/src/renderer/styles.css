@@ -185,8 +185,44 @@
       outline-offset: 2px;
     }
 
+    .nav-settings-btn {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: var(--card);
+      color: var(--ink);
+      text-align: left;
+      padding: 12px 14px;
+      font-size: 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 6px;
+      transition: all 0.2s ease;
+    }
+
+    .nav-settings-btn .material-symbols-outlined {
+      font-size: 18px;
+      font-variation-settings: "FILL" 0, "wght" 300, "GRAD" 0, "opsz" 24;
+    }
+
+    .nav-settings-btn:hover {
+      background: var(--brand-soft);
+      border-color: var(--brand);
+      transform: translateX(2px);
+      box-shadow: 0 2px 8px rgba(12, 143, 120, 0.08);
+    }
+
+    .nav-settings-btn.active {
+      background: linear-gradient(135deg, #0c8f78, #0da387);
+      color: #fff;
+      border-color: transparent;
+      transform: translateX(4px);
+      box-shadow: 0 8px 24px rgba(12, 143, 120, 0.25);
+    }
+
     .nav-footer {
-      margin-top: auto;
+      margin-top: 14px;
       padding-top: 16px;
       border-top: 1px solid var(--line);
       display: flex;
@@ -520,12 +556,15 @@
       text-align: center;
       line-height: 1.2;
     }
-    .issue-tag.code { background: rgba(191, 59, 59, 0.18); color: var(--bad); }
-    .issue-tag.method { background: rgba(195, 106, 14, 0.15); color: var(--warn); }
-    .issue-tag.required { background: rgba(78, 100, 134, 0.18); color: #2b4f84; }
-    .issue-tag.distance { background: rgba(59, 130, 196, 0.16); color: #1c4f7f; }
-    .issue-tag.vmi { background: rgba(148, 93, 182, 0.16); color: #6d3f8e; }
-    .issue-tag.whitelist { background: rgba(12, 143, 120, 0.16); color: #0b6f5e; }
+    .issue-tag.tag-site-mismatch { background: rgba(233, 57, 69, 0.28); color: #8f0f19; }
+    .issue-tag.tag-jis-distance { background: rgba(255, 136, 0, 0.3); color: #8b3f00; }
+    .issue-tag.tag-required-missing { background: rgba(0, 102, 255, 0.24); color: #003a9e; }
+    .issue-tag.tag-vmi-suggest { background: rgba(0, 186, 136, 0.28); color: #006346; }
+    .issue-tag.tag-vmi-conflict { background: rgba(155, 81, 224, 0.28); color: #5b2491; }
+    .issue-tag.tag-whitelist { background: rgba(104, 173, 0, 0.28); color: #3c6800; }
+    .issue-tag.tag-not-covered { background: rgba(62, 84, 255, 0.3); color: #2435b5; }
+    .issue-tag.tag-covered { background: rgba(255, 54, 142, 0.28); color: #9d0d50; }
+    .issue-tag.tag-default { background: rgba(69, 85, 104, 0.24); color: #2e3b4a; }
 
     /* ========== SUMMARY BAR ========== */
     .summary-bar {

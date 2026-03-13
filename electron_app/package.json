@@ -13,6 +13,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "sql.js": "^1.14.1",
     "vue": "^3.5.13",
     "xlsx": "^0.18.5"
   },

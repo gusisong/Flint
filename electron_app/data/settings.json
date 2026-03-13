@@ -1,0 +1,18 @@
+{
+  "smtpHost": "smtp.example.com",
+  "smtpPort": 587,
+  "smtpUser": "",
+  "smtpPassword": "",
+  "senderName": "Flint Dispatch",
+  "senderAddress": "flint@example.com",
+  "signature": "Flint 系统自动发送",
+  "otaManifestUrl": "",
+  "oneDriveCoverageDir": "",
+  "coverageOtaState": {
+    "lastSignature": "",
+    "lastFilePath": "",
+    "lastAppliedAt": "",
+    "lastUpserted": 0
+  },
+  "updatedAt": ""
+}

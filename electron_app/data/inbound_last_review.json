@@ -1,0 +1,827 @@
+{
+  "jobId": "inbound_job_1773398044228_rkblud",
+  "finishedAt": "2026-03-13T10:34:04.228Z",
+  "summary": {
+    "totalRows": 68,
+    "totalIssues": 68,
+    "fileCount": 1
+  },
+  "rows": [
+    {
+      "file": "workPkgDetail (13).xlsx",
+      "line": 6,
+      "plant": "1000",
+      "supplierCode": "10198",
+      "supplierName": "中信戴卡股份有限公司",
+      "partNo": "PP2601025T FZZ",
+      "partName": "车轮-前",
+      "tags": [
+        "供货方式组合异常"
+      ]
+    },
+    {
+      "file": "workPkgDetail (13).xlsx",
+      "line": 8,
+      "plant": "1000",
+      "supplierCode": "11915",
+      "supplierName": "宁波长华长盛汽车零部件有限公司",
+      "partNo": "P90006114",
+      "partName": "六角法兰面螺栓",
+      "tags": [
+        "站点已在承运"
+      ]
+    },
+    {
+      "file": "workPkgDetail (13).xlsx",
+      "line": 13,
+      "plant": "1000",
+      "supplierCode": "12335",
+      "supplierName": "豫北凯斯特隆（新乡）汽车科技有限公司",
+      "partNo": "PP2419753",
+      "partName": "转向中间轴总成",
+      "tags": [
+        "供货方式组合异常"
+      ]
+    },
+    {
+      "file": "workPkgDetail (13).xlsx",
+      "line": 26,
+      "plant": "1000",
+      "supplierCode": "11915",
+      "supplierName": "宁波长华长盛汽车零部件有限公司",
+      "partNo": "P90006505",
+      "partName": "六角法兰面带垫组合螺栓",
+      "tags": [
+        "站点已在承运"
+      ]
+    },
+    {
+      "file": "workPkgDetail (13).xlsx",
+      "line": 75,
+      "plant": "1000",
+      "supplierCode": "11915",
+      "supplierName": "宁波长华长盛汽车零部件有限公司",
+      "partNo": "P90006926",
+      "partName": "螺栓-前上控制臂",
+      "tags": [
+        "站点已在承运"
+      ]
+    },
+    {
+      "file": "workPkgDetail (13).xlsx",
+      "line": 77,
+      "plant": "1000",
+      "supplierCode": "11997",
+      "supplierName": "江苏铁锚科技股份有限公司",
+      "partNo": "PP2845021",
+      "partName": "前门窗玻璃总成",
+      "tags": [
+        "站点尚未承运"
+      ]
+    },
+    {
+      "file": "workPkgDetail (13).xlsx",
+      "line": 78,
+      "plant": "1000",
+      "supplierCode": "11997",
+      "supplierName": "江苏铁锚科技股份有限公司",
+      "partNo": "PP2845025",
+      "partName": "后门窗玻璃总成",
+      "tags": [
+        "站点尚未承运"
+      ]
+    },
+    {
+      "file": "workPkgDetail (13).xlsx",
+      "line": 79,
+      "plant": "1000",
+      "supplierCode": "11997",
+      "supplierName": "江苏铁锚科技股份有限公司",
+      "partNo": "PP2845026",
+      "partName": "后门窗玻璃总成",
+      "tags": [
+        "站点尚未承运"
+      ]
+    },
+    {
+      "file": "workPkgDetail (13).xlsx",
+      "line": 85,
+      "plant": "1000",
+      "supplierCode": "12233",
+      "supplierName": "惠州华阳通用电子有限公司",
+      "partNo": "PP2035467B",
+      "partName": "音响系统功率放大器",
+      "tags": [
+        ">300KM建议规划VMI"
+      ]
+    },
+    {
+      "file": "workPkgDetail (13).xlsx",
+      "line": 112,
+      "plant": "1000",
+      "supplierCode": "10141",
+      "supplierName": "上海吉翔汽车车顶饰件有限责任公司",
+      "partNo": "PP2857551  XF1",
+      "partName": "遮阳板总成",
+      "tags": [
+        "站点尚未承运"
+      ]
+    },
+    {
+      "file": "workPkgDetail (13).xlsx",
+      "line": 122,
+      "plant": "1000",
+      "supplierCode": "12319",
+      "supplierName": "深圳华美和控制系统有限公司",
+      "partNo": "PP2823535",
+      "partName": "发动机罩主锁开启拉索",
+      "tags": [
+        "供货方式组合异常"
+      ]
+    },
+    {
+      "file": "workPkgDetail (13).xlsx",
+      "line": 157,
+      "plant": "1000",
+      "supplierCode": "10138",
+      "supplierName": "宁波华翔电子股份有限公司",
+      "partNo": "PP2863303A DS2",
+      "partName": "中控台前侧饰板总成",
+      "tags": [
+        "站点已在承运"
+      ]
+    },
+    {
+      "file": "workPkgDetail (13).xlsx",
+      "line": 164,
+      "plant": "1000",
+      "supplierCode": "10951",
+      "supplierName": "象山博宇汽车模塑制造有限公司",
+      "partNo": "PP2837915",
+      "partName": "前门封板",
+      "tags": [
+        "<300KM不建议规划VMI"
+      ]
+    },
+    {
+      "file": "workPkgDetail (13).xlsx",
+      "line": 165,
+      "plant": "1000",
+      "supplierCode": "10951",
+      "supplierName": "象山博宇汽车模塑制造有限公司",
+      "partNo": "PP2868437A DS2",
+      "partName": "多功能传感器罩盖",
+      "tags": [
+        "<300KM不建议规划VMI"
+      ]
+    },
+    {
+      "file": "workPkgDetail (13).xlsx",
+      "line": 169,
+      "plant": "1000",
+      "supplierCode": "12305",
+      "supplierName": "华域汽车系统股份有限公司",
+      "partNo": "PP2907670B",
+      "partName": "车门雷达",
+      "tags": [
+        "<300KM不建议规划VMI"
+      ]
+    },
+    {
+      "file": "workPkgDetail (13).xlsx",
+      "line": 170,
+      "plant": "1000",
+      "supplierCode": "12305",
+      "supplierName": "华域汽车系统股份有限公司",
+      "partNo": "PP2907672B",
+      "partName": "车门雷达",
+      "tags": [
+        "<300KM不建议规划VMI"
+      ]
+    },
+    {
+      "file": "workPkgDetail (13).xlsx",
+      "line": 177,
+      "plant": "1000",
+      "supplierCode": "10951",
+      "supplierName": "象山博宇汽车模塑制造有限公司",
+      "partNo": "PP2839916",
+      "partName": "后门封板",
+      "tags": [
+        "<300KM不建议规划VMI"
+      ]
+    },
+    {
+      "file": "workPkgDetail (13).xlsx",
+      "line": 186,
+      "plant": "1000",
+      "supplierCode": "11499",
+      "supplierName": "浙江祥晋汽车零部件股份有限公司",
+      "partNo": "PP2839912",
+      "partName": "后门密封条总成(车门侧)",
+      "tags": [
+        "<300KM不建议规划VMI"
+      ]
+    },
+    {
+      "file": "workPkgDetail (13).xlsx",
+      "line": 216,
+      "plant": "1000",
+      "supplierCode": "10951",
+      "supplierName": "象山博宇汽车模塑制造有限公司",
+      "partNo": "PP2837916",
+      "partName": "前门封板",
+      "tags": [
+        "<300KM不建议规划VMI"
+      ]
+    },
+    {
+      "file": "workPkgDetail (13).xlsx",
+      "line": 224,
+      "plant": "1000",
+      "supplierCode": "11499",
+      "supplierName": "浙江祥晋汽车零部件股份有限公司",
+      "partNo": "PP2839475  T94",
+      "partName": "后门窗台外侧密封条",
+      "tags": [
+        "<300KM不建议规划VMI"
+      ]
+    },
+    {
+      "file": "workPkgDetail (13).xlsx",
+      "line": 230,
+      "plant": "1000",
+      "supplierCode": "11499",
+      "supplierName": "浙江祥晋汽车零部件股份有限公司",
+      "partNo": "PP2837912",
+      "partName": "前门密封条总成(车门侧)",
+      "tags": [
+        "<300KM不建议规划VMI"
+      ]
+    },
+    {
+      "file": "workPkgDetail (13).xlsx",
+      "line": 231,
+      "plant": "1000",
+      "supplierCode": "11499",
+      "supplierName": "浙江祥晋汽车零部件股份有限公司",
+      "partNo": "PP2837476  T94",
+      "partName": "前门窗台外侧密封条",
+      "tags": [
+        "<300KM不建议规划VMI"
+      ]
+    },
+    {
+      "file": "workPkgDetail (13).xlsx",
+      "line": 233,
+      "plant": "1000",
+      "supplierCode": "11997",
+      "supplierName": "江苏铁锚科技股份有限公司",
+      "partNo": "PP2845022",
+      "partName": "前门窗玻璃总成",
+      "tags": [
+        "站点尚未承运"
+      ]
+    },
+    {
+      "file": "workPkgDetail (13).xlsx",
+      "line": 243,
+      "plant": "1000",
+      "supplierCode": "29670",
+      "supplierName": "深圳威迈斯新能源股份有限公司",
+      "partNo": "PP2915681G",
+      "partName": "高低压充电集成模块总成",
+      "tags": [
+        ">300KM建议规划VMI"
+      ]
+    },
+    {
+      "file": "workPkgDetail (13).xlsx",
+      "line": 266,
+      "plant": "1000",
+      "supplierCode": "11499",
+      "supplierName": "浙江祥晋汽车零部件股份有限公司",
+      "partNo": "PP2837475  T94",
+      "partName": "前门窗台外侧密封条",
+      "tags": [
+        "<300KM不建议规划VMI"
+      ]
+    },
+    {
+      "file": "workPkgDetail (13).xlsx",
+      "line": 282,
+      "plant": "1000",
+      "supplierCode": "10951",
+      "supplierName": "象山博宇汽车模塑制造有限公司",
+      "partNo": "PP2839915",
+      "partName": "后门封板",
+      "tags": [
+        "<300KM不建议规划VMI"
+      ]
+    },
+    {
+      "file": "workPkgDetail (13).xlsx",
+      "line": 297,
+      "plant": "1000",
+      "supplierCode": "10138",
+      "supplierName": "宁波华翔电子股份有限公司",
+      "partNo": "PP2819807",
+      "partName": "顶棚连接风道",
+      "tags": [
+        "站点已在承运"
+      ]
+    },
+    {
+      "file": "workPkgDetail (13).xlsx",
+      "line": 298,
+      "plant": "1000",
+      "supplierCode": "10138",
+      "supplierName": "宁波华翔电子股份有限公司",
+      "partNo": "PP2819808",
+      "partName": "顶棚连接风道",
+      "tags": [
+        "站点已在承运"
+      ]
+    },
+    {
+      "file": "workPkgDetail (13).xlsx",
+      "line": 302,
+      "plant": "1000",
+      "supplierCode": "10138",
+      "supplierName": "宁波华翔电子股份有限公司",
+      "partNo": "PP2819869",
+      "partName": "第三排吹面出风道",
+      "tags": [
+        "站点已在承运"
+      ]
+    },
+    {
+      "file": "workPkgDetail (13).xlsx",
+      "line": 304,
+      "plant": "1000",
+      "supplierCode": "10138",
+      "supplierName": "宁波华翔电子股份有限公司",
+      "partNo": "PP2819806",
+      "partName": "地板后部出风道连接口",
+      "tags": [
+        "站点已在承运"
+      ]
+    },
+    {
+      "file": "workPkgDetail (13).xlsx",
+      "line": 305,
+      "plant": "1000",
+      "supplierCode": "10138",
+      "supplierName": "宁波华翔电子股份有限公司",
+      "partNo": "PP2819806B",
+      "partName": "地板后部出风道连接口",
+      "tags": [
+        "站点已在承运"
+      ]
+    },
+    {
+      "file": "workPkgDetail (13).xlsx",
+      "line": 306,
+      "plant": "1000",
+      "supplierCode": "10138",
+      "supplierName": "宁波华翔电子股份有限公司",
+      "partNo": "PP2819804",
+      "partName": "后空调风道总成",
+      "tags": [
+        "站点已在承运"
+      ]
+    },
+    {
+      "file": "workPkgDetail (13).xlsx",
+      "line": 307,
+      "plant": "1000",
+      "supplierCode": "10138",
+      "supplierName": "宁波华翔电子股份有限公司",
+      "partNo": "PP2819869A",
+      "partName": "第三排吹面出风道",
+      "tags": [
+        "站点已在承运"
+      ]
+    },
+    {
+      "file": "workPkgDetail (13).xlsx",
+      "line": 308,
+      "plant": "1000",
+      "supplierCode": "10138",
+      "supplierName": "宁波华翔电子股份有限公司",
+      "partNo": "PP2819631B",
+      "partName": "空调箱进气风道",
+      "tags": [
+        "站点已在承运"
+      ]
+    },
+    {
+      "file": "workPkgDetail (13).xlsx",
+      "line": 311,
+      "plant": "1000",
+      "supplierCode": "10138",
+      "supplierName": "宁波华翔电子股份有限公司",
+      "partNo": "PP2863312  DS2",
+      "partName": "中控台前盖板",
+      "tags": [
+        "站点已在承运"
+      ]
+    },
+    {
+      "file": "workPkgDetail (13).xlsx",
+      "line": 312,
+      "plant": "1000",
+      "supplierCode": "10138",
+      "supplierName": "宁波华翔电子股份有限公司",
+      "partNo": "PP2863915  DS2",
+      "partName": "中控台储物盒面板总成",
+      "tags": [
+        "站点已在承运"
+      ]
+    },
+    {
+      "file": "workPkgDetail (13).xlsx",
+      "line": 313,
+      "plant": "1000",
+      "supplierCode": "10141",
+      "supplierName": "上海吉翔汽车车顶饰件有限责任公司",
+      "partNo": "PP2857552  XF1",
+      "partName": "遮阳板总成",
+      "tags": [
+        "站点尚未承运"
+      ]
+    },
+    {
+      "file": "workPkgDetail (13).xlsx",
+      "line": 341,
+      "plant": "1000",
+      "supplierCode": "10257",
+      "supplierName": "福耀集团（上海）汽车玻璃有限公司",
+      "partNo": "PP2845298  T94",
+      "partName": "后三角窗总成",
+      "tags": [
+        "站点尚未承运"
+      ]
+    },
+    {
+      "file": "workPkgDetail (13).xlsx",
+      "line": 351,
+      "plant": "1000",
+      "supplierCode": "10494",
+      "supplierName": "上海嘉定延锋座椅系统有限公司",
+      "partNo": "PP2885387  4PK",
+      "partName": "第二排座椅安装脚饰盖",
+      "tags": [
+        "站点已在承运"
+      ]
+    },
+    {
+      "file": "workPkgDetail (13).xlsx",
+      "line": 373,
+      "plant": "1000",
+      "supplierCode": "10138",
+      "supplierName": "宁波华翔电子股份有限公司",
+      "partNo": "PP2819805",
+      "partName": "第三排地板出风道",
+      "tags": [
+        "站点已在承运"
+      ]
+    },
+    {
+      "file": "workPkgDetail (13).xlsx",
+      "line": 398,
+      "plant": "1000",
+      "supplierCode": "11362",
+      "supplierName": "上海英汇科技发展有限公司",
+      "partNo": "PP2853537  DS2",
+      "partName": "前门迎宾踏板总成",
+      "tags": [
+        "站点尚未承运"
+      ]
+    },
+    {
+      "file": "workPkgDetail (13).xlsx",
+      "line": 401,
+      "plant": "1000",
+      "supplierCode": "11499",
+      "supplierName": "浙江祥晋汽车零部件股份有限公司",
+      "partNo": "PP2837911",
+      "partName": "前门密封条总成(车门侧)",
+      "tags": [
+        "<300KM不建议规划VMI"
+      ]
+    },
+    {
+      "file": "workPkgDetail (13).xlsx",
+      "line": 402,
+      "plant": "1000",
+      "supplierCode": "11499",
+      "supplierName": "浙江祥晋汽车零部件股份有限公司",
+      "partNo": "PP2839911",
+      "partName": "后门密封条总成(车门侧)",
+      "tags": [
+        "<300KM不建议规划VMI"
+      ]
+    },
+    {
+      "file": "workPkgDetail (13).xlsx",
+      "line": 404,
+      "plant": "1000",
+      "supplierCode": "10675",
+      "supplierName": "长华控股集团股份有限公司",
+      "partNo": "N  10746301",
+      "partName": "六角法兰螺栓",
+      "tags": [
+        "站点已在承运"
+      ]
+    },
+    {
+      "file": "workPkgDetail (13).xlsx",
+      "line": 415,
+      "plant": "1000",
+      "supplierCode": "11499",
+      "supplierName": "浙江祥晋汽车零部件股份有限公司",
+      "partNo": "PP2839476  T94",
+      "partName": "后门窗台外侧密封条",
+      "tags": [
+        "<300KM不建议规划VMI"
+      ]
+    },
+    {
+      "file": "workPkgDetail (13).xlsx",
+      "line": 418,
+      "plant": "1000",
+      "supplierCode": "12305",
+      "supplierName": "华域汽车系统股份有限公司",
+      "partNo": "PP2907669B",
+      "partName": "车门雷达",
+      "tags": [
+        "<300KM不建议规划VMI"
+      ]
+    },
+    {
+      "file": "workPkgDetail (13).xlsx",
+      "line": 420,
+      "plant": "1000",
+      "supplierCode": "29670",
+      "supplierName": "深圳威迈斯新能源股份有限公司",
+      "partNo": "PP2915681H",
+      "partName": "高低压充电集成模块总成",
+      "tags": [
+        ">300KM建议规划VMI"
+      ]
+    },
+    {
+      "file": "workPkgDetail (13).xlsx",
+      "line": 426,
+      "plant": "1000",
+      "supplierCode": "11362",
+      "supplierName": "上海英汇科技发展有限公司",
+      "partNo": "PP2853540  DS2",
+      "partName": "后门迎宾踏板总成",
+      "tags": [
+        "站点尚未承运"
+      ]
+    },
+    {
+      "file": "workPkgDetail (13).xlsx",
+      "line": 445,
+      "plant": "1000",
+      "supplierCode": "10138",
+      "supplierName": "宁波华翔电子股份有限公司",
+      "partNo": "PP2863002B EX7",
+      "partName": "后中控台总成",
+      "tags": [
+        "站点已在承运"
+      ]
+    },
+    {
+      "file": "workPkgDetail (13).xlsx",
+      "line": 449,
+      "plant": "1000",
+      "supplierCode": "12233",
+      "supplierName": "惠州华阳通用电子有限公司",
+      "partNo": "PP2035466C",
+      "partName": "音响系统功率放大器",
+      "tags": [
+        ">300KM建议规划VMI"
+      ]
+    },
+    {
+      "file": "workPkgDetail (13).xlsx",
+      "line": 451,
+      "plant": "1000",
+      "supplierCode": "12305",
+      "supplierName": "华域汽车系统股份有限公司",
+      "partNo": "PP2907671B",
+      "partName": "车门雷达",
+      "tags": [
+        "<300KM不建议规划VMI"
+      ]
+    },
+    {
+      "file": "workPkgDetail (13).xlsx",
+      "line": 461,
+      "plant": "1000",
+      "supplierCode": "11362",
+      "supplierName": "上海英汇科技发展有限公司",
+      "partNo": "PP2853539  DS2",
+      "partName": "后门迎宾踏板总成",
+      "tags": [
+        "站点尚未承运"
+      ]
+    },
+    {
+      "file": "workPkgDetail (13).xlsx",
+      "line": 463,
+      "plant": "1000",
+      "supplierCode": "11362",
+      "supplierName": "上海英汇科技发展有限公司",
+      "partNo": "PP2853538  DS2",
+      "partName": "前门迎宾踏板总成",
+      "tags": [
+        "站点尚未承运"
+      ]
+    },
+    {
+      "file": "workPkgDetail (13).xlsx",
+      "line": 469,
+      "plant": "1000",
+      "supplierCode": "10138",
+      "supplierName": "宁波华翔电子股份有限公司",
+      "partNo": "PP2863304A DS2",
+      "partName": "中控台前侧饰板总成",
+      "tags": [
+        "站点已在承运"
+      ]
+    },
+    {
+      "file": "workPkgDetail (13).xlsx",
+      "line": 478,
+      "plant": "1000",
+      "supplierCode": "10951",
+      "supplierName": "象山博宇汽车模塑制造有限公司",
+      "partNo": "PP2868438A DS2",
+      "partName": "多功能传感器罩盖",
+      "tags": [
+        "<300KM不建议规划VMI"
+      ]
+    },
+    {
+      "file": "workPkgDetail (13).xlsx",
+      "line": 497,
+      "plant": "1000",
+      "supplierCode": "10257",
+      "supplierName": "福耀集团（上海）汽车玻璃有限公司",
+      "partNo": "PP2845297  T94",
+      "partName": "后三角窗总成",
+      "tags": [
+        "站点尚未承运"
+      ]
+    },
+    {
+      "file": "workPkgDetail (13).xlsx",
+      "line": 513,
+      "plant": "1000",
+      "supplierCode": "11915",
+      "supplierName": "宁波长华长盛汽车零部件有限公司",
+      "partNo": "P90000442",
+      "partName": "螺栓-第二排座椅骨架",
+      "tags": [
+        "站点已在承运"
+      ]
+    },
+    {
+      "file": "workPkgDetail (13).xlsx",
+      "line": 518,
+      "plant": "1000",
+      "supplierCode": "10138",
+      "supplierName": "宁波华翔电子股份有限公司",
+      "partNo": "PP2863002  EX7",
+      "partName": "后中控台总成",
+      "tags": [
+        "站点已在承运"
+      ]
+    },
+    {
+      "file": "workPkgDetail (13).xlsx",
+      "line": 519,
+      "plant": "1000",
+      "supplierCode": "10138",
+      "supplierName": "宁波华翔电子股份有限公司",
+      "partNo": "PP2863311  DS2",
+      "partName": "中控台前盖板",
+      "tags": [
+        "站点已在承运"
+      ]
+    },
+    {
+      "file": "workPkgDetail (13).xlsx",
+      "line": 520,
+      "plant": "1000",
+      "supplierCode": "10138",
+      "supplierName": "宁波华翔电子股份有限公司",
+      "partNo": "PP2863303  DS2",
+      "partName": "中控台前侧饰板总成",
+      "tags": [
+        "站点已在承运"
+      ]
+    },
+    {
+      "file": "workPkgDetail (13).xlsx",
+      "line": 521,
+      "plant": "1000",
+      "supplierCode": "10138",
+      "supplierName": "宁波华翔电子股份有限公司",
+      "partNo": "PP2863304  DS2",
+      "partName": "中控台前侧饰板总成",
+      "tags": [
+        "站点已在承运"
+      ]
+    },
+    {
+      "file": "workPkgDetail (13).xlsx",
+      "line": 522,
+      "plant": "1000",
+      "supplierCode": "10138",
+      "supplierName": "宁波华翔电子股份有限公司",
+      "partNo": "PP2863002A EX7",
+      "partName": "后中控台总成",
+      "tags": [
+        "站点已在承运"
+      ]
+    },
+    {
+      "file": "workPkgDetail (13).xlsx",
+      "line": 523,
+      "plant": "1000",
+      "supplierCode": "10138",
+      "supplierName": "宁波华翔电子股份有限公司",
+      "partNo": "PP2863002A 65I",
+      "partName": "后中控台总成",
+      "tags": [
+        "站点已在承运"
+      ]
+    },
+    {
+      "file": "workPkgDetail (13).xlsx",
+      "line": 524,
+      "plant": "1000",
+      "supplierCode": "10138",
+      "supplierName": "宁波华翔电子股份有限公司",
+      "partNo": "PP2864041  63I",
+      "partName": "后中控台后盖板总成",
+      "tags": [
+        "站点已在承运"
+      ]
+    },
+    {
+      "file": "workPkgDetail (13).xlsx",
+      "line": 526,
+      "plant": "1000",
+      "supplierCode": "10138",
+      "supplierName": "宁波华翔电子股份有限公司",
+      "partNo": "PP2863002B 65I",
+      "partName": "后中控台总成",
+      "tags": [
+        "站点已在承运"
+      ]
+    },
+    {
+      "file": "workPkgDetail (13).xlsx",
+      "line": 533,
+      "plant": "1000",
+      "supplierCode": "10138",
+      "supplierName": "宁波华翔电子股份有限公司",
+      "partNo": "PP2863233",
+      "partName": "中控台后安装支架",
+      "tags": [
+        "站点已在承运"
+      ]
+    },
+    {
+      "file": "workPkgDetail (13).xlsx",
+      "line": 540,
+      "plant": "1000",
+      "supplierCode": "10257",
+      "supplierName": "福耀集团（上海）汽车玻璃有限公司",
+      "partNo": "PP2845501A",
+      "partName": "后风窗玻璃总成",
+      "tags": [
+        "站点已在承运"
+      ]
+    },
+    {
+      "file": "workPkgDetail (13).xlsx",
+      "line": 631,
+      "plant": "1000",
+      "supplierCode": "12046",
+      "supplierName": "宁波晶美科技有限公司",
+      "partNo": "PP2853740A Y9B",
+      "partName": "车型名称字牌总成",
+      "tags": [
+        "站点已在承运"
+      ]
+    }
+  ]
+}

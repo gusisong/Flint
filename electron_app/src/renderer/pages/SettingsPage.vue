@@ -74,9 +74,32 @@
         <label>Manifest URL（OneDrive 公开只读链接）</label>
         <input v-model="form.otaManifestUrl" class="form-input" type="text" placeholder="https://.../stable-manifest.json">
       </div>
+      <div class="form-group">
+        <label>OneDrive Coverage CSV 目录（共享目录）</label>
+        <input
+          v-model="form.oneDriveCoverageDir"
+          class="form-input"
+          type="text"
+          placeholder="C:/Users/.../OneDrive/..."
+        >
+      </div>
+      <div class="toolbar" style="border-bottom:none;padding-bottom:0;margin-top:10px;">
+        <div class="left-actions">
+          <button class="btn ghost" type="button" @click="checkCoverageUpdateNow">检查Coverage数据更新</button>
+          <button class="btn ghost" type="button" @click="applyCoverageUpdateNow">应用Coverage数据更新</button>
+        </div>
+        <div class="right-actions">
+          <button class="btn ghost" type="button" @click="importCoverageNow">导入本地Coverage CSV</button>
+        </div>
+      </div>
       <div class="form-group" style="font-size:12px;color:var(--muted);line-height:1.5;">
         当前版本：{{ updateStatus.currentVersion || 'unknown' }}<br>
         最新版本：{{ updateStatus.latestVersion || '-' }}
+      </div>
+      <div class="form-group" style="font-size:12px;color:var(--muted);line-height:1.5;">
+        Coverage候选文件：{{ coverageOtaStatus.filePath || '-' }}<br>
+        Coverage是否有更新：{{ coverageOtaStatus.needsUpdate ? '是' : '否' }}<br>
+        Coverage最后应用时间：{{ form.coverageOtaState.lastAppliedAt || '-' }}
       </div>
     </div>
 
@@ -101,6 +124,10 @@ const form = reactive({
   senderAddress: "",
   signature: "",
   otaManifestUrl: "",
+  oneDriveCoverageDir: "",
+  coverageOtaState: {
+    lastAppliedAt: "",
+  },
   updatedAt: "",
 });
 
@@ -110,6 +137,10 @@ const updateStatus = reactive({
   currentVersion: "",
   latestVersion: "",
   hasUpdate: false,
+});
+const coverageOtaStatus = reactive({
+  filePath: "",
+  needsUpdate: false,
 });
 
 function applyConfig(config = {}) {
@@ -121,6 +152,10 @@ function applyConfig(config = {}) {
   form.senderAddress = config.senderAddress || "";
   form.signature = config.signature || "";
   form.otaManifestUrl = config.otaManifestUrl || "";
+  form.oneDriveCoverageDir = config.oneDriveCoverageDir || "";
+  form.coverageOtaState = {
+    lastAppliedAt: config.coverageOtaState?.lastAppliedAt || "",
+  };
   form.updatedAt = config.updatedAt || "";
 }
 
@@ -148,6 +183,7 @@ async function saveConfig() {
     senderAddress: form.senderAddress,
     signature: form.signature,
     otaManifestUrl: form.otaManifestUrl,
+    oneDriveCoverageDir: form.oneDriveCoverageDir,
   };
 
   const result = await window.flintApi.settingsSave(payload);
@@ -182,6 +218,45 @@ async function checkUpdateNow() {
   }
 
   banner.value = result?.reason ? `检查完成：${result.reason}` : "当前已是最新版本";
+}
+
+async function checkCoverageUpdateNow() {
+  if (!window.flintApi?.otaCheckCoverageDataUpdate) {
+    banner.value = "Coverage OTA IPC 未就绪";
+    return;
+  }
+  const result = await window.flintApi.otaCheckCoverageDataUpdate();
+  coverageOtaStatus.filePath = result?.filePath || "";
+  coverageOtaStatus.needsUpdate = !!result?.needsUpdate;
+  banner.value = result?.reason || (result?.needsUpdate ? "检测到新的Coverage数据" : "Coverage数据无变化");
+}
+
+async function applyCoverageUpdateNow() {
+  if (!window.flintApi?.otaApplyCoverageDataUpdate) {
+    banner.value = "Coverage OTA IPC 未就绪";
+    return;
+  }
+  const result = await window.flintApi.otaApplyCoverageDataUpdate(false);
+  if (!result?.ok) {
+    banner.value = result?.reason || "Coverage更新失败";
+    return;
+  }
+  if (!result?.applied) {
+    banner.value = result?.reason || "Coverage无更新";
+    return;
+  }
+  banner.value = `Coverage已更新，写入 ${result?.importResult?.upserted || 0} 条`;
+  await loadConfig();
+}
+
+async function importCoverageNow() {
+  if (!window.flintApi?.coverageImportCsv) {
+    banner.value = "Coverage IPC 未就绪";
+    return;
+  }
+  const result = await window.flintApi.coverageImportCsv();
+  banner.value = `Coverage导入完成：${result?.upserted || 0} 条`;
+  await loadConfig();
 }
 
 onMounted(async () => {

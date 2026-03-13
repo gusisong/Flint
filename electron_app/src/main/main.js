@@ -11,6 +11,11 @@ const {
 const { reviewInboundFiles } = require("./services/inbound-review");
 const { buildInboundCsvContent } = require("./services/inbound-csv");
 const { checkForUpdate, downloadAndVerifyUpdate } = require("./services/ota-service");
+const { NetworkTransportCoverageStore } = require("./services/network-transport-coverage-store");
+const {
+  checkCoverageCsvUpdate,
+  getDefaultCoverageSeedCandidates,
+} = require("./services/coverage-ota-service");
 
 const isDev = !!process.env.VITE_DEV_SERVER_URL;
 const MAIL_PERSIST_SUBDIR = "mail_uploads";
@@ -27,11 +32,13 @@ const runtime = {
   inboundLastReviewStoreFile: "",
   supplierStoreFile: "",
   settingsStoreFile: "",
+  coverageDbFile: "",
   mailTasks: [],
   inboundUploads: [],
   inboundLastReview: null,
   suppliers: [],
   settings: null,
+  coverageStore: null,
 };
 
 const DEFAULT_SUPPLIERS = [
@@ -49,8 +56,83 @@ const DEFAULT_SETTINGS = {
   senderAddress: "flint@example.com",
   signature: "Flint 系统自动发送",
   otaManifestUrl: "",
+  oneDriveCoverageDir: "",
+  coverageOtaState: {
+    lastSignature: "",
+    lastFilePath: "",
+    lastAppliedAt: "",
+    lastUpserted: 0,
+  },
   updatedAt: "",
 };
+
+function resolveProgramDataDir() {
+  if (app.isPackaged) {
+    return path.join(path.dirname(process.execPath), "data");
+  }
+  return path.join(app.getAppPath(), "data");
+}
+
+function normalizeCoverageOtaState(payload = {}) {
+  return {
+    lastSignature: String(payload.lastSignature || ""),
+    lastFilePath: String(payload.lastFilePath || ""),
+    lastAppliedAt: String(payload.lastAppliedAt || ""),
+    lastUpserted: Number(payload.lastUpserted || 0),
+  };
+}
+
+function getCoverageOtaState() {
+  return normalizeCoverageOtaState(runtime.settings?.coverageOtaState || {});
+}
+
+async function applyCoverageCsvImport(csvPath) {
+  if (!runtime.coverageStore) {
+    throw new Error("coverageStore 未初始化");
+  }
+  const importResult = await runtime.coverageStore.importFromCsv(csvPath);
+  const checkResult = await checkCoverageCsvUpdate({
+    sharedDir: path.dirname(csvPath),
+    lastSignature: "",
+  });
+  runtime.settings.coverageOtaState = {
+    ...getCoverageOtaState(),
+    lastSignature: String(checkResult.signature || ""),
+    lastFilePath: csvPath,
+    lastAppliedAt: new Date().toISOString(),
+    lastUpserted: Number(importResult.upserted || 0),
+  };
+  await saveSettings();
+  return {
+    ...importResult,
+    coverageOtaState: runtime.settings.coverageOtaState,
+  };
+}
+
+async function bootstrapCoverageIfEmpty() {
+  if (!runtime.coverageStore) {
+    return;
+  }
+  const currentCount = await runtime.coverageStore.getRowCount();
+  if (currentCount > 0) {
+    return;
+  }
+
+  const candidates = [];
+  const oneDriveDir = String(runtime.settings?.oneDriveCoverageDir || "").trim();
+  if (oneDriveDir) {
+    candidates.push(path.join(oneDriveDir, "NetworkTransportCoverage.csv"));
+  }
+  candidates.push(...getDefaultCoverageSeedCandidates());
+
+  for (const candidate of candidates) {
+    if (!candidate || !fs.existsSync(candidate)) {
+      continue;
+    }
+    await applyCoverageCsvImport(candidate);
+    break;
+  }
+}
 
 function createWindow() {
   const iconPath = path.join(__dirname, "../../public/Flint_Icon.png");
@@ -124,7 +206,7 @@ async function initRuntime() {
     return;
   }
 
-  runtime.dataDir = path.join(app.getPath("userData"), "data");
+  runtime.dataDir = resolveProgramDataDir();
   runtime.logsDir = path.join(runtime.dataDir, "logs");
   runtime.mailUploadDir = path.join(runtime.dataDir, MAIL_PERSIST_SUBDIR);
   runtime.inboundUploadDir = path.join(runtime.dataDir, INBOUND_PERSIST_SUBDIR);
@@ -134,6 +216,7 @@ async function initRuntime() {
   runtime.inboundLastReviewStoreFile = path.join(runtime.dataDir, "inbound_last_review.json");
   runtime.supplierStoreFile = path.join(runtime.dataDir, "suppliers.json");
   runtime.settingsStoreFile = path.join(runtime.dataDir, "settings.json");
+  runtime.coverageDbFile = path.join(runtime.dataDir, "network_transport_coverage.db");
 
   fs.mkdirSync(runtime.dataDir, { recursive: true });
   fs.mkdirSync(runtime.logsDir, { recursive: true });
@@ -150,6 +233,16 @@ async function initRuntime() {
   }));
   await saveSuppliers();
   runtime.settings = await readJsonFile(runtime.settingsStoreFile, DEFAULT_SETTINGS);
+  runtime.settings = {
+    ...DEFAULT_SETTINGS,
+    ...runtime.settings,
+    coverageOtaState: normalizeCoverageOtaState(runtime.settings?.coverageOtaState || {}),
+  };
+  await saveSettings();
+
+  runtime.coverageStore = new NetworkTransportCoverageStore(runtime.coverageDbFile);
+  await runtime.coverageStore.init();
+  await bootstrapCoverageIfEmpty();
   runtime.ready = true;
 }
 
@@ -325,6 +418,69 @@ function registerIpcHandlers() {
     return { ok: true, filePath: result.filePath };
   });
 
+  ipcMain.handle("coverage:import-csv", async (_event, payload = {}) => {
+    await initRuntime();
+    const directPath = String(payload.csvPath || "").trim();
+    const fromOneDrive = String(runtime.settings?.oneDriveCoverageDir || "").trim();
+    const csvPath = directPath || (fromOneDrive ? path.join(fromOneDrive, "NetworkTransportCoverage.csv") : "");
+    if (!csvPath) {
+      throw new Error("csvPath 不能为空，且 oneDriveCoverageDir 未配置");
+    }
+    return applyCoverageCsvImport(csvPath);
+  });
+
+  ipcMain.handle("coverage:get-by-site", async (_event, payload = {}) => {
+    await initRuntime();
+    const site = String(payload.site || "").trim();
+    const coverage = await runtime.coverageStore.getCoverageBySite(site);
+    return { site, coverage };
+  });
+
+  ipcMain.handle("ota:data-check-coverage", async () => {
+    await initRuntime();
+    const oneDriveCoverageDir = String(runtime.settings?.oneDriveCoverageDir || "").trim();
+    const state = getCoverageOtaState();
+    return checkCoverageCsvUpdate({
+      sharedDir: oneDriveCoverageDir,
+      lastSignature: state.lastSignature,
+    });
+  });
+
+  ipcMain.handle("ota:data-apply-coverage", async (_event, payload = {}) => {
+    await initRuntime();
+    const force = !!payload.force;
+    const oneDriveCoverageDir = String(runtime.settings?.oneDriveCoverageDir || "").trim();
+    const state = getCoverageOtaState();
+    const checkResult = await checkCoverageCsvUpdate({
+      sharedDir: oneDriveCoverageDir,
+      lastSignature: state.lastSignature,
+    });
+
+    if (!checkResult.hasCandidate) {
+      return {
+        ok: false,
+        applied: false,
+        reason: checkResult.reason || "共享目录内未找到覆盖率CSV",
+      };
+    }
+    if (!force && !checkResult.needsUpdate) {
+      return {
+        ok: true,
+        applied: false,
+        reason: "未检测到新Coverage数据",
+        check: checkResult,
+      };
+    }
+
+    const importResult = await applyCoverageCsvImport(checkResult.filePath);
+    return {
+      ok: true,
+      applied: true,
+      check: checkResult,
+      importResult,
+    };
+  });
+
   ipcMain.handle("mail:upload-files", async (_event, payload = {}) => {
     await initRuntime();
     const files = Array.isArray(payload.files) ? payload.files : [];
@@ -472,7 +628,9 @@ function registerIpcHandlers() {
       ? runtime.inboundUploads.filter((x) => fileIds.includes(x.id))
       : runtime.inboundUploads;
 
-    const rows = await reviewInboundFiles(targets);
+    const rows = await reviewInboundFiles(targets, {
+      resolveCoverageBySite: (site) => runtime.coverageStore.getCoverageBySite(site),
+    });
 
     const jobId = `inbound_job_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
     const payloadOut = {
@@ -604,6 +762,12 @@ function registerIpcHandlers() {
       ...payload,
       smtpPort: Number(payload.smtpPort || runtime.settings.smtpPort || 587),
       otaManifestUrl: String(payload.otaManifestUrl ?? runtime.settings.otaManifestUrl ?? ""),
+      oneDriveCoverageDir: String(
+        payload.oneDriveCoverageDir ?? runtime.settings.oneDriveCoverageDir ?? "",
+      ),
+      coverageOtaState: normalizeCoverageOtaState(
+        payload.coverageOtaState ?? runtime.settings.coverageOtaState ?? {},
+      ),
       updatedAt: new Date().toISOString(),
     };
     await saveSettings();
@@ -625,5 +789,11 @@ app.whenReady().then(() => {
 app.on("window-all-closed", () => {
   if (process.platform !== "darwin") {
     app.quit();
+  }
+});
+
+app.on("before-quit", async () => {
+  if (runtime.coverageStore) {
+    await runtime.coverageStore.close();
   }
 });

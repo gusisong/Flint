@@ -36,6 +36,15 @@
             <span>{{ item.label }}</span>
           </button>
         </div>
+        <button
+          class="nav-settings-btn"
+          :class="{ active: currentView === 'settings' }"
+          type="button"
+          @click="currentView = 'settings'"
+        >
+          <span class="material-symbols-outlined">settings</span>
+          <span>系统设置</span>
+        </button>
         <div class="nav-footer">
           <span>Stable · {{ appVersion }}</span>
           <span>{{ appMetaText }}</span>
@@ -65,7 +74,6 @@ const navItems = [
   { id: "inbound", label: "Inbound规划审查", icon: "fact_check" },
   { id: "mail", label: "运输协议外发", icon: "local_shipping" },
   { id: "supplier", label: "供应商管理", icon: "badge" },
-  { id: "settings", label: "系统设置", icon: "settings" },
 ];
 
 const currentView = ref("inbound");

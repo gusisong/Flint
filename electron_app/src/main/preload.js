@@ -24,6 +24,11 @@ contextBridge.exposeInMainWorld("flintApi", {
   },
   checkForUpdate: (manifestUrl) => ipcRenderer.invoke("update:check", { manifestUrl }),
   downloadAndInstallUpdate: (payload) => ipcRenderer.invoke("update:download-install", payload),
+  coverageImportCsv: (csvPath) => ipcRenderer.invoke("coverage:import-csv", { csvPath }),
+  coverageGetBySite: (site) => ipcRenderer.invoke("coverage:get-by-site", { site }),
+  otaCheckCoverageDataUpdate: () => ipcRenderer.invoke("ota:data-check-coverage"),
+  otaApplyCoverageDataUpdate: (force = false) =>
+    ipcRenderer.invoke("ota:data-apply-coverage", { force }),
 
   inboundUploadFiles: (files) => ipcRenderer.invoke("inbound:upload-files", { files }),
   inboundGetUploads: () => ipcRenderer.invoke("inbound:get-uploads"),

@@ -1,0 +1,20 @@
+[
+  {
+    "code": "10243",
+    "name": "ACME Corp",
+    "email": "ops@acme.example",
+    "enabled": true
+  },
+  {
+    "code": "11502",
+    "name": "东方精密",
+    "email": "dispatch@dfjm.example",
+    "enabled": true
+  },
+  {
+    "code": "11888",
+    "name": "南海零部件",
+    "email": "mail@nanhai.example",
+    "enabled": true
+  }
+]
