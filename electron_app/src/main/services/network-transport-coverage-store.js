@@ -99,12 +99,29 @@ class NetworkTransportCoverageStore {
     }
     this.db = seed ? new SQL.Database(new Uint8Array(seed)) : new SQL.Database();
     this.db.run(`
+      CREATE TABLE IF NOT EXISTS schema_version (
+        key TEXT PRIMARY KEY,
+        version INTEGER NOT NULL,
+        updated_at TEXT NOT NULL
+      );
+    `);
+    this.db.run(`
       CREATE TABLE IF NOT EXISTS network_transport_coverage (
         site TEXT PRIMARY KEY,
         coverage REAL NOT NULL,
         updated_at TEXT NOT NULL
       );
     `);
+    this.db.run(
+      `
+      INSERT INTO schema_version (key, version, updated_at)
+      VALUES ('flint_core', 1, ?)
+      ON CONFLICT(key) DO UPDATE SET
+        version = excluded.version,
+        updated_at = excluded.updated_at;
+      `,
+      [new Date().toISOString()],
+    );
     await this.flush();
   }
 

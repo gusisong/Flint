@@ -32,7 +32,7 @@ const runtime = {
   inboundLastReviewStoreFile: "",
   supplierStoreFile: "",
   settingsStoreFile: "",
-  coverageDbFile: "",
+  coreDbFile: "",
   mailTasks: [],
   inboundUploads: [],
   inboundLastReview: null,
@@ -216,7 +216,7 @@ async function initRuntime() {
   runtime.inboundLastReviewStoreFile = path.join(runtime.dataDir, "inbound_last_review.json");
   runtime.supplierStoreFile = path.join(runtime.dataDir, "suppliers.json");
   runtime.settingsStoreFile = path.join(runtime.dataDir, "settings.json");
-  runtime.coverageDbFile = path.join(runtime.dataDir, "network_transport_coverage.db");
+  runtime.coreDbFile = path.join(runtime.dataDir, "flint_core.db");
 
   fs.mkdirSync(runtime.dataDir, { recursive: true });
   fs.mkdirSync(runtime.logsDir, { recursive: true });
@@ -240,7 +240,7 @@ async function initRuntime() {
   };
   await saveSettings();
 
-  runtime.coverageStore = new NetworkTransportCoverageStore(runtime.coverageDbFile);
+  runtime.coverageStore = new NetworkTransportCoverageStore(runtime.coreDbFile);
   await runtime.coverageStore.init();
   await bootstrapCoverageIfEmpty();
   runtime.ready = true;

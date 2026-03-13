@@ -9,7 +9,7 @@ __pycache__/
 data/
 !electron_app/data/
 electron_app/data/*
-!electron_app/data/network_transport_coverage.db
+!electron_app/data/flint_core.db
 
 # OS files
 .DS_Store
