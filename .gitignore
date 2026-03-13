@@ -8,6 +8,7 @@ __pycache__/
 # Runtime data
 data/
 !electron_app/data/
+electron_app/data/*
 !electron_app/data/network_transport_coverage.db
 
 # OS files
