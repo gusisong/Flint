@@ -112,6 +112,13 @@ class NetworkTransportCoverageStore {
         updated_at TEXT NOT NULL
       );
     `);
+    this.db.run(`
+      CREATE TABLE IF NOT EXISTS app_state (
+        key TEXT PRIMARY KEY,
+        payload TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      );
+    `);
     this.db.run(
       `
       INSERT INTO schema_version (key, version, updated_at)
@@ -209,6 +216,51 @@ class NetworkTransportCoverageStore {
     stmt.free();
     const coverage = Number(row.coverage);
     return Number.isFinite(coverage) ? coverage : null;
+  }
+
+  async getAppState(key, fallbackValue) {
+    await this.init();
+    const stateKey = String(key || "").trim();
+    if (!stateKey) {
+      throw new Error("app_state key 不能为空");
+    }
+
+    const stmt = this.db.prepare("SELECT payload FROM app_state WHERE key = ? LIMIT 1;");
+    stmt.bind([stateKey]);
+    const hasRow = stmt.step();
+    if (!hasRow) {
+      stmt.free();
+      return fallbackValue;
+    }
+
+    const row = stmt.getAsObject();
+    stmt.free();
+    try {
+      return JSON.parse(String(row.payload || "null"));
+    } catch {
+      await this.setAppState(stateKey, fallbackValue);
+      return fallbackValue;
+    }
+  }
+
+  async setAppState(key, payload) {
+    await this.init();
+    const stateKey = String(key || "").trim();
+    if (!stateKey) {
+      throw new Error("app_state key 不能为空");
+    }
+
+    this.db.run(
+      `
+      INSERT INTO app_state (key, payload, updated_at)
+      VALUES (?, ?, ?)
+      ON CONFLICT(key) DO UPDATE SET
+        payload = excluded.payload,
+        updated_at = excluded.updated_at;
+      `,
+      [stateKey, JSON.stringify(payload ?? null), new Date().toISOString()],
+    );
+    await this.flush();
   }
 
   async close() {

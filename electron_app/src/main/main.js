@@ -27,11 +27,6 @@ const runtime = {
   logsDir: "",
   mailUploadDir: "",
   inboundUploadDir: "",
-  mailStoreFile: "",
-  inboundUploadStoreFile: "",
-  inboundLastReviewStoreFile: "",
-  supplierStoreFile: "",
-  settingsStoreFile: "",
   coreDbFile: "",
   mailTasks: [],
   inboundUploads: [],
@@ -176,21 +171,28 @@ function createWindow() {
 
 async function readJsonFile(filePath, fallbackValue) {
   if (!fs.existsSync(filePath)) {
-    await fsp.writeFile(filePath, JSON.stringify(fallbackValue, null, 2), "utf-8");
     return fallbackValue;
   }
   try {
     const raw = await fsp.readFile(filePath, "utf-8");
-    const parsed = JSON.parse(raw);
-    return parsed;
+    return JSON.parse(raw);
   } catch {
-    await fsp.writeFile(filePath, JSON.stringify(fallbackValue, null, 2), "utf-8");
     return fallbackValue;
   }
 }
 
-async function writeJsonFile(filePath, payload) {
-  await fsp.writeFile(filePath, JSON.stringify(payload, null, 2), "utf-8");
+async function loadStateFromCoreDb(stateKey, legacyFilePath, fallbackValue) {
+  if (legacyFilePath && fs.existsSync(legacyFilePath)) {
+    const legacyValue = await readJsonFile(legacyFilePath, fallbackValue);
+    await runtime.coverageStore.setAppState(stateKey, legacyValue);
+    try {
+      await fsp.unlink(legacyFilePath);
+    } catch {
+      // best-effort cleanup for retired JSON persistence files
+    }
+    return legacyValue;
+  }
+  return runtime.coverageStore.getAppState(stateKey, fallbackValue);
 }
 
 function broadcast(channel, payload) {
@@ -210,44 +212,48 @@ async function initRuntime() {
   runtime.logsDir = path.join(runtime.dataDir, "logs");
   runtime.mailUploadDir = path.join(runtime.dataDir, MAIL_PERSIST_SUBDIR);
   runtime.inboundUploadDir = path.join(runtime.dataDir, INBOUND_PERSIST_SUBDIR);
-
-  runtime.mailStoreFile = path.join(runtime.dataDir, "mail_tasks.json");
-  runtime.inboundUploadStoreFile = path.join(runtime.dataDir, "inbound_uploads.json");
-  runtime.inboundLastReviewStoreFile = path.join(runtime.dataDir, "inbound_last_review.json");
-  runtime.supplierStoreFile = path.join(runtime.dataDir, "suppliers.json");
-  runtime.settingsStoreFile = path.join(runtime.dataDir, "settings.json");
   runtime.coreDbFile = path.join(runtime.dataDir, "flint_core.db");
+
+  const legacyMailStoreFile = path.join(runtime.dataDir, "mail_tasks.json");
+  const legacyInboundUploadStoreFile = path.join(runtime.dataDir, "inbound_uploads.json");
+  const legacyInboundLastReviewStoreFile = path.join(runtime.dataDir, "inbound_last_review.json");
+  const legacySupplierStoreFile = path.join(runtime.dataDir, "suppliers.json");
+  const legacySettingsStoreFile = path.join(runtime.dataDir, "settings.json");
 
   fs.mkdirSync(runtime.dataDir, { recursive: true });
   fs.mkdirSync(runtime.logsDir, { recursive: true });
   fs.mkdirSync(runtime.mailUploadDir, { recursive: true });
   fs.mkdirSync(runtime.inboundUploadDir, { recursive: true });
 
-  runtime.mailTasks = await readJsonFile(runtime.mailStoreFile, []);
-  runtime.inboundUploads = await readJsonFile(runtime.inboundUploadStoreFile, []);
-  runtime.inboundLastReview = await readJsonFile(runtime.inboundLastReviewStoreFile, null);
-  runtime.suppliers = await readJsonFile(runtime.supplierStoreFile, DEFAULT_SUPPLIERS);
+  runtime.coverageStore = new NetworkTransportCoverageStore(runtime.coreDbFile);
+  await runtime.coverageStore.init();
+
+  runtime.mailTasks = await loadStateFromCoreDb("mail_tasks", legacyMailStoreFile, []);
+  runtime.inboundUploads = await loadStateFromCoreDb("inbound_uploads", legacyInboundUploadStoreFile, []);
+  runtime.inboundLastReview = await loadStateFromCoreDb(
+    "inbound_last_review",
+    legacyInboundLastReviewStoreFile,
+    null,
+  );
+  runtime.suppliers = await loadStateFromCoreDb("suppliers", legacySupplierStoreFile, DEFAULT_SUPPLIERS);
   runtime.suppliers = runtime.suppliers.map((item) => ({
     ...item,
     enabled: true,
   }));
   await saveSuppliers();
-  runtime.settings = await readJsonFile(runtime.settingsStoreFile, DEFAULT_SETTINGS);
+  runtime.settings = await loadStateFromCoreDb("settings", legacySettingsStoreFile, DEFAULT_SETTINGS);
   runtime.settings = {
     ...DEFAULT_SETTINGS,
     ...runtime.settings,
     coverageOtaState: normalizeCoverageOtaState(runtime.settings?.coverageOtaState || {}),
   };
   await saveSettings();
-
-  runtime.coverageStore = new NetworkTransportCoverageStore(runtime.coreDbFile);
-  await runtime.coverageStore.init();
   await bootstrapCoverageIfEmpty();
   runtime.ready = true;
 }
 
 async function saveMailTasks() {
-  await writeJsonFile(runtime.mailStoreFile, runtime.mailTasks);
+  await runtime.coverageStore.setAppState("mail_tasks", runtime.mailTasks);
 }
 
 function getMailTasks(hideSent) {
@@ -303,19 +309,19 @@ function startMailQueue(jobId, taskIds, subjectPrefix) {
 }
 
 async function saveInboundUploads() {
-  await writeJsonFile(runtime.inboundUploadStoreFile, runtime.inboundUploads);
+  await runtime.coverageStore.setAppState("inbound_uploads", runtime.inboundUploads);
 }
 
 async function saveInboundLastReview() {
-  await writeJsonFile(runtime.inboundLastReviewStoreFile, runtime.inboundLastReview);
+  await runtime.coverageStore.setAppState("inbound_last_review", runtime.inboundLastReview);
 }
 
 async function saveSuppliers() {
-  await writeJsonFile(runtime.supplierStoreFile, runtime.suppliers);
+  await runtime.coverageStore.setAppState("suppliers", runtime.suppliers);
 }
 
 async function saveSettings() {
-  await writeJsonFile(runtime.settingsStoreFile, runtime.settings);
+  await runtime.coverageStore.setAppState("settings", runtime.settings);
 }
 
 function normalizeSupplierCode(code) {
