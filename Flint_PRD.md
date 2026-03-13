@@ -265,6 +265,15 @@
 * English: The top-right minimize/maximize/close controls must be edge-aligned (`top: 0; right: 0`), with no surrounding border or container fill, while retaining button hover feedback for a frameless and integrated visual style.
 * 中文：主内容区域增加统一顶部安全区，避免各模块右侧功能区与窗口三按钮发生遮挡或点击冲突。
 * English: A global top safe-area must be reserved for the main content to prevent overlap and click conflicts between module right-side action areas and window control buttons.
+* 中文：布局修正为“左侧导航全高度背景 + 右侧主内容独立顶部留白”，右侧功能区上沿可上移且不与窗口三按钮重叠，页面上下留白保持均衡。
+* English: Layout is adjusted to "full-height left navigation background + independent top spacing for right main content", allowing the right action area to move upward without overlapping window controls while keeping balanced vertical whitespace.
+
+### 6.9 模块1真实审查实现（V2.2）
+
+* 中文：Inbound 规划审查禁止前端或主进程伪造示例结果；点击“开始审查”后必须基于上传文件执行真实解析与规则校验，并回填真实结果。
+* English: Inbound review must not use mocked sample rows in either renderer or main process. After "Start Review", uploaded files must be truly parsed and validated by rules, and real results must be returned to the UI.
+* 中文：审查引擎统一采用 SheetJS (`xlsx`) 读取首个工作表，按 PRD 规则输出问题标签（供应商编码不一致、Inbound方式错误、缺少必填字段、运输距离超限、VMI规则冲突、白名单外组合）。
+* English: The review engine uses SheetJS (`xlsx`) to parse the first worksheet and emits PRD-defined issue tags (supplier-code mismatch, inbound-method error, required-field missing, distance over-limit, VMI conflict, and whitelist violation).
 * 后续正式开发（Electron + Vue）必须保持同等模块边界：页面层、公共组件层、业务状态层分离。
 * `ui/frontend_demo.html` 保留为回退与视觉对照基线，不再继续承载新增交互逻辑。
 

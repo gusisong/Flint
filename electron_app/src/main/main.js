@@ -9,6 +9,7 @@ const {
   makeSubject,
   toCsvCell,
 } = require("./services/domain-utils");
+const { reviewInboundFiles } = require("./services/inbound-review");
 const { checkForUpdate, downloadAndVerifyUpdate } = require("./services/ota-service");
 
 const isDev = !!process.env.VITE_DEV_SERVER_URL;
@@ -212,28 +213,6 @@ async function saveSuppliers() {
 
 async function saveSettings() {
   await writeJsonFile(runtime.settingsStoreFile, runtime.settings);
-}
-
-function generateInboundRows(fileName, indexSeed) {
-  const issueSets = [
-    ["供应商编码不一致", "Inbound方式错误"],
-    ["缺少必填字段"],
-    ["运输距离超限", "VMI规则冲突"],
-    ["白名单外组合"],
-  ];
-
-  return [
-    {
-      file: fileName,
-      line: 10 + indexSeed,
-      plant: ["WUH", "NAN", "SHA", "HUB"][indexSeed % 4],
-      supplierCode: String(10000 + ((indexSeed * 37) % 90000)),
-      supplierName: ["ACME Corp", "东方精密", "联创供应", "星河工业"][indexSeed % 4],
-      partNo: `P-${String(indexSeed + 1000)}`,
-      partName: ["前桥总成", "稳定杆", "转向节", "悬挂臂"][indexSeed % 4],
-      tags: issueSets[indexSeed % issueSets.length],
-    },
-  ];
 }
 
 function normalizeSupplierCode(code) {
@@ -476,10 +455,7 @@ function registerIpcHandlers() {
       ? runtime.inboundUploads.filter((x) => fileIds.includes(x.id))
       : runtime.inboundUploads;
 
-    const rows = [];
-    targets.forEach((file, idx) => {
-      rows.push(...generateInboundRows(file.fileName, idx + 1));
-    });
+    const rows = await reviewInboundFiles(targets);
 
     const jobId = `inbound_job_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
     const payloadOut = {
